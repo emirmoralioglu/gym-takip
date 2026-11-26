@@ -48,6 +48,8 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
 
+    // room-testing json 1.8.1 ister; lifecycle 1.7.3 getiriyor. Yalnizca debug derlemesinde yukseltilir.
+    debugImplementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.8.1")
     androidTestImplementation("androidx.room:room-testing:2.8.5")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test:runner:1.7.0")
