@@ -99,8 +99,10 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     /** Gecmis ekranindan silme; bagli bir set satiri varsa baglantisi da kaldirilir. */
     fun delete(entry: WorkoutEntry) = run("Silinemedi") {
         deletedIds += entry.id
-        setRows.value.filterValues { it.entryId == entry.id }.keys.forEach { editJobs.remove(it)?.cancel() }
+        val pending = setRows.value.filterValues { it.entryId == entry.id }.keys.mapNotNull { editJobs.remove(it) }
         try {
+            // Bekleyen duzenlemeler bitmeden silinmez; silinen kayit geri yazilamaz.
+            pending.forEach { it.cancelAndJoin() }
             dao.delete(entry)
         } catch (e: Exception) {
             deletedIds -= entry.id
@@ -156,7 +158,15 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
                 if (id in deletedIds || setRows.value[key]?.entryId != id) return@launch
                 val old = entries.value?.firstOrNull { it.id == id }
                 when (val r = FolderLogic.editedEntry(old, key.epochDay, plan, next)) {
-                    is FormResult.Error -> error.value = r.message
+                    is FormResult.Error -> {
+                        error.value = r.message
+                        // Gecersiz metin satirda kalmasin: kayittaki degere geri don.
+                        if (old != null && FolderLogic.isBoundTo(old, key.epochDay, plan)) {
+                            setRows.update { m ->
+                                if (m[key]?.entryId == id) m + (key to RowState(FolderLogic.kgText(old.weightKg), old.reps.toString(), id)) else m
+                            }
+                        }
+                    }
                     is FormResult.Ok -> {
                         val e = r.entry
                         val before = entries.value

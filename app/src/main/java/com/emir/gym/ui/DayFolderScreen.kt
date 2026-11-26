@@ -247,7 +247,7 @@ private fun WeightPlan(
                 muscleGroup = MuscleGroup.labelOf(pe.muscleGroup).ifEmpty { null },
                 plannedSets = pe.sets,
                 plannedReps = pe.targetReps,
-                doneSets = progress.doneSets,
+                doneSets = FolderLogic.displayDoneSets(progress.doneSets, pe.sets, bulk.isNotEmpty()),
             ) {
                 if (pe.note.isNotBlank()) {
                     Text(pe.note, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)

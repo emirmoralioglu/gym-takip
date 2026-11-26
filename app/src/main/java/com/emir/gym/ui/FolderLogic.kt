@@ -75,6 +75,13 @@ object FolderLogic {
             .maxWithOrNull(compareBy({ it.epochDay }, { it.id }))?.weightKg
     }
 
+    /**
+     * Kartta gorunen tamamlanan set sayisi. Toplu (sets>1) kayit varken ust sinir plan set sayisidir;
+     * boylece toplu kayit + yeniden isaretlenen satir "4/3" gostermez. Toplu kayit yokken plan asilabilir.
+     */
+    fun displayDoneSets(done: Int, planned: Int, hasBulk: Boolean): Int =
+        if (hasBulk) minOf(done, planned) else done
+
     /** Kayit, bu tarihteki bu plan hareketinin tek setlik (sets=1) satirina baglanabilir mi? */
     fun isBoundTo(e: WorkoutEntry, epochDay: Long, plan: PlanExercise): Boolean =
         e.sets == 1 && e.epochDay == epochDay && sameExercise(e, ExerciseCatalog.key(plan.name))

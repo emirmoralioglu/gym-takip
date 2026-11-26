@@ -196,6 +196,12 @@ class FolderLogicTest {
         assertEquals(WorkoutEntry(5, mon.toEpochDay(), "Bench press", 1, 6, 62.5, "not", "GOGUS"), ok.entry)
     }
 
+    @Test fun displayDoneSetsCapsOnlyWithBulk() {
+        assertEquals(3, FolderLogic.displayDoneSets(4, 3, hasBulk = true))
+        assertEquals(2, FolderLogic.displayDoneSets(2, 3, hasBulk = true))
+        assertEquals(4, FolderLogic.displayDoneSets(4, 3, hasBulk = false))
+    }
+
     // --- ipucu ---
     @Test fun lastKgIgnoresLaterDatesAndZeroKg() {
         val list = listOf(
