@@ -12,11 +12,16 @@ import com.emir.gym.data.NewRecord
 import com.emir.gym.data.NutritionGoals
 import com.emir.gym.data.PlanDay
 import com.emir.gym.data.PlanExercise
+import com.emir.gym.data.FormResult
 import com.emir.gym.data.Records
 import com.emir.gym.data.RestTimer
 import com.emir.gym.data.SettingsStore
 import com.emir.gym.data.WaterLog
 import com.emir.gym.data.WorkoutEntry
+import com.emir.gym.ui.FolderLogic
+import com.emir.gym.ui.RowKey
+import com.emir.gym.ui.RowState
+import java.time.LocalDate
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -24,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class GymViewModel(app: Application) : AndroidViewModel(app) {
@@ -61,10 +67,19 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     val restEndAt = MutableStateFlow<Long?>(null)
     private var restJob: Job? = null
 
+    /** Sayacin baslangic suresi (sn); halka orani icin. */
+    val restTotalSeconds = MutableStateFlow(0)
+
+    /** Duraklatildiysa kalan ms; calisirken null. restEndAt de duraklatinca null olur. */
+    val restPausedLeftMs = MutableStateFlow<Long?>(null)
+
     init {
         // Surec olduyse sayac zaman damgasindan devam eder; suresi gectiyse temizlenir.
         val saved = prefs.getLong(KEY_END, 0L)
-        if (saved > System.currentTimeMillis()) scheduleRest(saved) else prefs.edit().remove(KEY_END).apply()
+        if (saved > System.currentTimeMillis()) {
+            restTotalSeconds.value = ((saved - System.currentTimeMillis() + 999) / 1000).toInt()
+            scheduleRest(saved)
+        } else prefs.edit().remove(KEY_END).apply()
     }
 
     fun save(entry: WorkoutEntry) {
@@ -80,11 +95,128 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun delete(entry: WorkoutEntry) = run("Silinemedi") { dao.delete(entry) }
+    /** Gecmis ekranindan silme; bagli bir set satiri varsa baglantisi da kaldirilir. */
+    fun delete(entry: WorkoutEntry) = run("Silinemedi") {
+        dao.delete(entry)
+        deletedIds += entry.id
+        setRows.update { m -> m.mapValues { (_, st) -> if (st.entryId == entry.id) st.copy(entryId = null) else st } }
+    }
 
     fun copyEntries(items: List<WorkoutEntry>) = run("Kopyalanamadı") {
         dao.insertAll(items)
         error.value = "${items.size} kayıt bugüne kopyalandı"
+    }
+
+    // ---- Gun klasoru: set satirlari <-> workout_entries ----
+
+    /** Set satirlari (yalnizca acik klasorun tarihi). Kayit eslemesi burada tutulur. */
+    val setRows = MutableStateFlow<Map<RowKey, RowState>>(emptyMap())
+    private val pendingRows = mutableSetOf<RowKey>()
+    private val editJobs = mutableMapOf<RowKey, Job>()
+
+    /** Klasor acilinca / plan degisince: o tarihin mevcut kayitlarindan satirlari yeniden kurar. */
+    fun syncRows(date: LocalDate, plan: List<PlanExercise>) {
+        lastSync = date to plan
+        // Yazma surerken liste henuz guncel olmayabilir; bitince yeniden kurulur.
+        if (pendingRows.isNotEmpty()) return
+        val all = entries.value ?: return
+        setRows.update { FolderLogic.reconcile(it, plan, date.toEpochDay(), all, deletedIds) }
+    }
+
+    private var lastSync: Pair<LocalDate, List<PlanExercise>>? = null
+
+    /** Silinen kayit id'leri: akis henuz guncellenmediyse bile yeniden bir satira baglanmaz. */
+    private val deletedIds = mutableSetOf<Long>()
+
+    fun addExtraSet(plan: PlanExercise, epochDay: Long) {
+        setRows.update { m ->
+            val next = (m.keys.filter { it.planId == plan.id && it.epochDay == epochDay }.maxOfOrNull { it.index } ?: -1) + 1
+            m + (RowKey(plan.id, epochDay, next) to RowState("", plan.targetReps.toString()))
+        }
+    }
+
+    /** Set satirinin metnini degistirir; set tamamsa kisa bir bekleyisten sonra kaydi gunceller. */
+    fun editRow(key: RowKey, plan: PlanExercise, kg: String, reps: String) {
+        val row = setRows.value[key] ?: return
+        val next = row.copy(kg = kg, reps = reps)
+        setRows.update { it + (key to next) }
+        val id = row.entryId ?: return
+        editJobs[key]?.cancel()
+        editJobs[key] = viewModelScope.launch {
+            delay(EDIT_DEBOUNCE_MS)
+            try {
+                val old = entries.value?.firstOrNull { it.id == id }
+                when (val r = FolderLogic.toEntry(id, key.epochDay, plan, next, null, old?.note ?: "")) {
+                    is FormResult.Error -> error.value = r.message
+                    is FormResult.Ok -> {
+                        val e = old?.let { r.entry.copy(exercise = it.exercise, muscleGroup = it.muscleGroup) } ?: r.entry
+                        val before = entries.value
+                        dao.upsert(e)
+                        if (before != null) newRecord.value = Records.check(before, e)
+                    }
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                error.value = "Kaydedilemedi: ${e.message ?: "bilinmeyen hata"}"
+            }
+        }
+    }
+
+    /** Seti isaretler (kayit yazar, dinlenme sayacini baslatir) ya da geri alir (kaydi siler). */
+    fun toggleSet(key: RowKey, plan: PlanExercise, done: Boolean) {
+        val row = setRows.value[key] ?: return
+        if (key in pendingRows) return
+        if (done) {
+            if (row.done) return
+            val hint = entries.value?.let { FolderLogic.lastKg(plan.name, it) }
+            val r = FolderLogic.toEntry(0, key.epochDay, plan, row, hint)
+            if (r is FormResult.Error) { error.value = r.message; return }
+            val entry = (r as FormResult.Ok).entry
+            val before = entries.value
+            pendingRows += key
+            viewModelScope.launch {
+                try {
+                    val id = dao.upsert(entry)
+                    setRows.update { m ->
+                        if (key in m) m + (key to RowState(FolderLogic.kgText(entry.weightKg), entry.reps.toString(), id)) else m
+                    }
+                    if (before != null) newRecord.value = Records.check(before, entry)
+                    startRest(plan.restSeconds)
+                } catch (e: Exception) {
+                    error.value = "Kaydedilemedi: ${e.message ?: "bilinmeyen hata"}"
+                } finally {
+                    pendingRows -= key
+                    lastSync?.let { (d, p) -> syncRows(d, p) }
+                }
+            }
+        } else {
+            val id = row.entryId ?: return
+            editJobs.remove(key)?.cancel()
+            val entry = entries.value?.firstOrNull { it.id == id }
+                ?: WorkoutEntry(id, key.epochDay, plan.name, 1, row.reps.toIntOrNull() ?: 1, 0.0)
+            pendingRows += key
+            viewModelScope.launch {
+                try {
+                    dao.delete(entry)
+                    deletedIds += id
+                    setRows.update { m -> m[key]?.let { m + (key to it.copy(entryId = null)) } ?: m }
+                } catch (e: Exception) {
+                    error.value = "Silinemedi: ${e.message ?: "bilinmeyen hata"}"
+                } finally {
+                    pendingRows -= key
+                }
+            }
+        }
+    }
+
+    /** Onceki gunun degerlerini tamamlanmamis satirlara yazar (kayit yazmaz). Doner: degisen satir sayisi. */
+    fun fillRows(plan: List<PlanExercise>, source: LocalDate): Int {
+        val all = entries.value ?: return 0
+        val src = all.filter { it.epochDay == source.toEpochDay() }
+        val (rows, changed) = FolderLogic.fillFromSource(setRows.value, plan, src)
+        setRows.value = rows
+        return changed
     }
 
     fun addCustomExercise(ex: CustomExercise) = run("Egzersiz eklenemedi") {
@@ -119,6 +251,8 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     fun clearNewRecord() { newRecord.value = null }
 
     fun startRest(seconds: Int) {
+        restPausedLeftMs.value = null
+        restTotalSeconds.value = seconds
         val end = System.currentTimeMillis() + seconds * 1000L
         prefs.edit().putLong(KEY_END, end).apply()
         scheduleRest(end)
@@ -127,7 +261,38 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     fun cancelRest() {
         restJob?.cancel()
         restEndAt.value = null
+        restPausedLeftMs.value = null
         prefs.edit().remove(KEY_END).apply()
+    }
+
+    fun pauseRest() {
+        val end = restEndAt.value ?: return
+        restPausedLeftMs.value = maxOf(0L, end - System.currentTimeMillis())
+        restJob?.cancel()
+        restEndAt.value = null
+        prefs.edit().remove(KEY_END).apply()
+    }
+
+    fun resumeRest() {
+        val left = restPausedLeftMs.value ?: return
+        restPausedLeftMs.value = null
+        val end = System.currentTimeMillis() + left
+        prefs.edit().putLong(KEY_END, end).apply()
+        scheduleRest(end)
+    }
+
+    /** Calisan ya da duraklatilmis sayaca saniye ekler. */
+    fun addRest(seconds: Int) {
+        restPausedLeftMs.value?.let {
+            restPausedLeftMs.value = it + seconds * 1000L
+            restTotalSeconds.value += seconds
+            return
+        }
+        val end = restEndAt.value ?: return
+        restTotalSeconds.value += seconds
+        val newEnd = end + seconds * 1000L
+        prefs.edit().putLong(KEY_END, newEnd).apply()
+        scheduleRest(newEnd)
     }
 
     private fun scheduleRest(end: Long) {
@@ -149,5 +314,8 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    private companion object { const val KEY_END = "end_at" }
+    private companion object {
+        const val KEY_END = "end_at"
+        const val EDIT_DEBOUNCE_MS = 700L
+    }
 }
