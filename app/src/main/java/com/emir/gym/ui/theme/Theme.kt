@@ -6,51 +6,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-
-val GymLightColors: ColorScheme = lightColorScheme(
-    primary = LightPrimary,
-    onPrimary = LightOnPrimary,
-    primaryContainer = LightPrimaryContainer,
-    onPrimaryContainer = LightOnPrimaryContainer,
-    inversePrimary = LightInversePrimary,
-    secondary = LightSecondary,
-    onSecondary = LightOnSecondary,
-    secondaryContainer = LightSecondaryContainer,
-    onSecondaryContainer = LightOnSecondaryContainer,
-    tertiary = LightTertiary,
-    onTertiary = LightOnTertiary,
-    tertiaryContainer = LightTertiaryContainer,
-    onTertiaryContainer = LightOnTertiaryContainer,
-    background = LightSurface,
-    onBackground = LightOnSurface,
-    surface = LightSurface,
-    onSurface = LightOnSurface,
-    surfaceVariant = LightSurfaceVariant,
-    onSurfaceVariant = LightOnSurfaceVariant,
-    surfaceTint = LightPrimary,
-    inverseSurface = LightInverseSurface,
-    inverseOnSurface = LightInverseOnSurface,
-    error = LightError,
-    onError = LightOnError,
-    errorContainer = LightErrorContainer,
-    onErrorContainer = LightOnErrorContainer,
-    outline = LightOutline,
-    outlineVariant = LightOutlineVariant,
-    surfaceBright = LightSurface,
-    surfaceDim = LightSurfaceDim,
-    surfaceContainerLowest = LightSurfaceContainerLowest,
-    surfaceContainerLow = LightSurfaceContainerLow,
-    surfaceContainer = LightSurfaceContainer,
-    surfaceContainerHigh = LightSurfaceContainerHigh,
-    surfaceContainerHighest = LightSurfaceContainerHighest,
-)
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
 
 val GymDarkColors: ColorScheme = darkColorScheme(
     primary = DarkPrimary,
     onPrimary = DarkOnPrimary,
     primaryContainer = DarkPrimaryContainer,
     onPrimaryContainer = DarkOnPrimaryContainer,
-    inversePrimary = DarkInversePrimary,
+    inversePrimary = LightPrimary,
     secondary = DarkSecondary,
     onSecondary = DarkOnSecondary,
     secondaryContainer = DarkSecondaryContainer,
@@ -59,23 +23,24 @@ val GymDarkColors: ColorScheme = darkColorScheme(
     onTertiary = DarkOnTertiary,
     tertiaryContainer = DarkTertiaryContainer,
     onTertiaryContainer = DarkOnTertiaryContainer,
-    background = DarkSurface,
+    background = DarkBackground,
     onBackground = DarkOnSurface,
-    surface = DarkSurface,
+    surface = DarkBackground,
     onSurface = DarkOnSurface,
-    surfaceVariant = DarkSurfaceVariant,
+    surfaceVariant = DarkSurfaceContainerHighest,
     onSurfaceVariant = DarkOnSurfaceVariant,
-    surfaceTint = DarkPrimary,
-    inverseSurface = DarkInverseSurface,
-    inverseOnSurface = DarkInverseOnSurface,
+    surfaceTint = DarkBackground,
+    inverseSurface = DarkOnSurface,
+    inverseOnSurface = Ink,
     error = DarkError,
     onError = DarkOnError,
     errorContainer = DarkErrorContainer,
     onErrorContainer = DarkOnErrorContainer,
     outline = DarkOutline,
     outlineVariant = DarkOutlineVariant,
+    scrim = Ink,
     surfaceBright = DarkSurfaceBright,
-    surfaceDim = DarkSurface,
+    surfaceDim = DarkBackground,
     surfaceContainerLowest = DarkSurfaceContainerLowest,
     surfaceContainerLow = DarkSurfaceContainerLow,
     surfaceContainer = DarkSurfaceContainer,
@@ -83,19 +48,66 @@ val GymDarkColors: ColorScheme = darkColorScheme(
     surfaceContainerHighest = DarkSurfaceContainerHighest,
 )
 
+val GymLightColors: ColorScheme = lightColorScheme(
+    primary = LightPrimary,
+    onPrimary = LightOnPrimary,
+    primaryContainer = LightPrimaryContainer,
+    onPrimaryContainer = LightOnPrimaryContainer,
+    inversePrimary = DarkPrimary,
+    secondary = LightSecondary,
+    onSecondary = LightOnSecondary,
+    secondaryContainer = LightSecondaryContainer,
+    onSecondaryContainer = LightOnSecondaryContainer,
+    tertiary = LightTertiary,
+    onTertiary = LightOnTertiary,
+    tertiaryContainer = LightTertiaryContainer,
+    onTertiaryContainer = LightOnTertiaryContainer,
+    background = LightBackground,
+    onBackground = LightOnSurface,
+    surface = LightBackground,
+    onSurface = LightOnSurface,
+    surfaceVariant = LightSurfaceContainerHighest,
+    onSurfaceVariant = LightOnSurfaceVariant,
+    surfaceTint = LightBackground,
+    inverseSurface = Ink,
+    inverseOnSurface = DarkOnSurface,
+    error = LightError,
+    onError = LightOnError,
+    errorContainer = LightErrorContainer,
+    onErrorContainer = LightOnErrorContainer,
+    outline = LightOutline,
+    outlineVariant = LightOutlineVariant,
+    surfaceBright = LightSurfaceContainerLowest,
+    surfaceDim = LightSurfaceDim,
+    surfaceContainerLowest = LightSurfaceContainerLowest,
+    surfaceContainerLow = LightSurfaceContainerLow,
+    surfaceContainer = LightSurfaceContainer,
+    surfaceContainerHigh = LightSurfaceContainerHigh,
+    surfaceContainerHighest = LightSurfaceContainerHighest,
+)
+
 /**
- * Uygulama teması. Marka tutarlılığı için dinamik (duvar kağıdı) renk
- * kullanılmaz; sistem açık/koyu ayarını izler.
+ * Uygulama teması. Koyu tema ana temadır; varsayılan olarak sistem
+ * açık/koyu ayarını izler. Marka tutarlılığı için dinamik renk kullanılmaz.
  */
 @Composable
 fun GymTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(
-        colorScheme = if (darkTheme) GymDarkColors else GymLightColors,
-        typography = GymTypography,
-        shapes = GymShapes,
-        content = content,
-    )
+    CompositionLocalProvider(LocalGymColors provides if (darkTheme) DarkGymColors else LightGymColors) {
+        MaterialTheme(
+            colorScheme = if (darkTheme) GymDarkColors else GymLightColors,
+            typography = GymTypography,
+            shapes = GymShapes,
+            content = content,
+        )
+    }
+}
+
+/** Temaya özel değerlere erişim: `GymTheme.colors.accent`. */
+object GymTheme {
+    val colors: GymColors
+        @Composable @ReadOnlyComposable
+        get() = LocalGymColors.current
 }
