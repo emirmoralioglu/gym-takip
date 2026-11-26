@@ -129,7 +129,9 @@ fun LineChart(
         val dot = 4.dp.toPx()
         val pad = dot + 2.dp.toPx()
         val dash = PathEffect.dashPathEffect(floatArrayOf(3.dp.toPx(), 4.dp.toPx()))
-        for (i in 0..2) {
+        // Tek/boş durumda yalnızca orta çizgi; alt çizgi mesajla çakışmasın.
+        val gridRows = if (points.size < 2) listOf(1) else listOf(0, 1, 2)
+        for (i in gridRows) {
             val y = pad + (h - 2 * pad) * i / 2f
             drawLine(gridColor, Offset(0f, y), Offset(w, y), strokeWidth = 1.dp.toPx(), pathEffect = dash)
         }

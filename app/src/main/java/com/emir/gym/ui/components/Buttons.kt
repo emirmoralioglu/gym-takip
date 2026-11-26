@@ -27,7 +27,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.material3.Surface
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.padding
@@ -113,14 +112,13 @@ fun ChipRow(
         modifier = modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .selectableGroup(),
+            .selectableGroup()
+            .padding(contentPadding),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        Spacer(Modifier.width(contentPadding.calculateLeftPadding(LayoutDirection.Ltr)))
         options.forEachIndexed { i, label ->
             GymChip(label = label, selected = i == selectedIndex, onClick = { onSelect(i) })
         }
-        Spacer(Modifier.width(contentPadding.calculateRightPadding(LayoutDirection.Ltr)))
     }
 }
 
