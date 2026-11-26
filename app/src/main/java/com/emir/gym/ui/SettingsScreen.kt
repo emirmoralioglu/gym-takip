@@ -193,7 +193,7 @@ private fun ProteinCard(weightKg: Double?, range: ClosedFloatingPointRange<Doubl
                 color = GymTheme.colors.accent,
             )
             Text(
-                stringResource(R.string.screens_protein_basis, UiFormat.number(weightKg), UiFormat.number(minPerKg, 1), UiFormat.number(maxPerKg, 1)),
+                stringResource(R.string.screens_protein_basis, UiFormat.number(weightKg), "%.1f".format(java.util.Locale.US, minPerKg), "%.1f".format(java.util.Locale.US, maxPerKg)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

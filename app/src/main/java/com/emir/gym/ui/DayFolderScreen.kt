@@ -261,7 +261,7 @@ private fun WeightPlan(
                     )
                     Spacer(Modifier.height(8.dp))
                 }
-                SetRowHeader()
+                if (sets.isNotEmpty()) SetRowHeader()
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     sets.forEach { (key, st) ->
                         SetRow(

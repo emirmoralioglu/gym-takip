@@ -122,8 +122,8 @@
     <string name="screens_week_empty">Bu hafta henüz kayıt yok.</string>
     <string name="screens_compare">Geçen haftayla karşılaştırma</string>
     <string name="screens_delta_percent">%s%%</string>
-    <string name="screens_vs_last_week">geçen haftaya göre</string>
-    <string name="screens_no_last_week">geçen hafta kayıt yok</string>
+    <string name="screens_vs_last_week">geçen hafta</string>
+    <string name="screens_no_last_week">kıyas yok</string>
     <string name="screens_last_week_value">Geçen hafta: %s</string>
 
     <!-- İlerleme -->
