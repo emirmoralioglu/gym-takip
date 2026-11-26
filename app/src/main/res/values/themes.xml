@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AppCompat bağımlılığı yok; platform temasından türetilir. Asıl görünüm Compose GymTheme'dedir. -->
+    <style name="Theme.Gym" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:colorPrimary">@color/gym_primary</item>
+        <item name="android:colorAccent">@color/gym_primary</item>
+        <item name="android:windowBackground">@color/gym_window_background</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+</resources>

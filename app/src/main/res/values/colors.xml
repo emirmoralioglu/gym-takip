@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Uygulama ikonu -->
+    <color name="ic_launcher_background">#FFD9480F</color>
+    <color name="ic_launcher_foreground">#FFFFFFFF</color>
+
+    <!-- Pencere ve sistem çubukları (Compose teması yüklenmeden önce görünür) -->
+    <color name="gym_window_background">#FFFFF8F6</color>
+    <color name="gym_primary">#FFA63B00</color>
+</resources>
