@@ -44,7 +44,7 @@ object Records {
                 val w = byDay.reduce { a, b -> if (b.weightKg > a.weightKg + EPS) b else a }
                 val r = byDay.filter { oneRm(it) != null }
                     .reduceOrNull { a, b -> if (oneRm(b)!! > oneRm(a)!! + EPS) b else a }
-                ExerciseRecord(w.exercise.trim(), w.weightKg, w.epochDay, r?.let { oneRm(it) }, r?.epochDay)
+                ExerciseRecord(ExerciseCatalog.displayName(w.exercise), w.weightKg, w.epochDay, r?.let { oneRm(it) }, r?.epochDay)
             }
             .sortedBy { ExerciseCatalog.key(it.exercise) }
 
@@ -66,6 +66,6 @@ object Records {
         val wBroken = e.weightKg > prevW + EPS
         val rBroken = r != null && prevR != null && r > prevR + EPS
         if (!wBroken && !rBroken) return null
-        return NewRecord(e.exercise.trim(), wBroken, rBroken, e.weightKg, r ?: 0.0, prevW, prevR ?: 0.0)
+        return NewRecord(ExerciseCatalog.displayName(e.exercise), wBroken, rBroken, e.weightKg, r ?: 0.0, prevW, prevR ?: 0.0)
     }
 }

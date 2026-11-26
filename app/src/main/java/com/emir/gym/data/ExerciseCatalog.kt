@@ -71,6 +71,12 @@ object ExerciseCatalog {
             "Treadmill", "Cycling", "Elliptical", "Rowing machine", "Jump rope", "Walking",
         )
 
+    /** Gosterilecek ad: katalogdaki harekete eslesiyorsa kanonik Ingilizce ad, yoksa kirpilmis girdi. */
+    fun displayName(name: String): String {
+        val k = key(name)
+        return all.firstOrNull { key(it.name) == k }?.name ?: name.trim()
+    }
+
     fun byGroup(): Map<MuscleGroup, List<ExerciseDef>> = all.groupBy { it.group }
 
     /** Kayit icin kas grubu: once kayitta saklanan, yoksa katalog/ozel listeden. */
@@ -92,6 +98,9 @@ object ExerciseCatalog {
         if (n.length > MAX_NAME_LENGTH) return "Egzersiz adı en fazla $MAX_NAME_LENGTH karakter olabilir"
         if (group == null) return "Kas grubu seç"
         val k = key(n)
+        LEGACY_EXERCISE_RENAMES.entries.firstOrNull { fold(it.key) == fold(n) }?.let {
+            return "Bu hareket artık ${it.value} adıyla listede"
+        }
         if (all.any { key(it.name) == k } || custom.any { key(it.name) == k }) {
             return "Bu egzersiz zaten listede var"
         }

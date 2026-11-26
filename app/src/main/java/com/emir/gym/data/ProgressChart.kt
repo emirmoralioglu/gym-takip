@@ -38,5 +38,5 @@ object ProgressChart {
             .groupBy { ExerciseCatalog.key(it.exercise) }
             .values
             .sortedWith(compareByDescending<List<WorkoutEntry>> { it.size }.thenBy { ExerciseCatalog.key(it.first().exercise) })
-            .map { it.first().exercise.trim() }
+            .map { ExerciseCatalog.displayName(it.first().exercise) }
 }

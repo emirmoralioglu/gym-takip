@@ -71,6 +71,7 @@ val LEGACY_EXERCISE_RENAMES: Map<String, String> = linkedMapOf(
     "Dambıl fly" to "Dumbbell fly",
     "Kablo crossover" to "Cable crossover",
     "Şınav" to "Push-up",
+    "Paralel bar dips" to "Parallel bar dips",
     "Chest press makinesi" to "Chest press machine",
     "Incline chest press makinesi" to "Incline chest press machine",
     "Barfiks" to "Pull-up",
