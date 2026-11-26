@@ -12,6 +12,10 @@ data class NutritionGoals(
     val waterMl: Int = 2500,
     val calories: Int? = null,
 ) {
+    /** Protein hedefi icin kilo tek kaynak: son tarti, yoksa ayardaki kilo, yoksa null. */
+    fun withEffectiveWeight(weights: List<BodyWeight>): NutritionGoals =
+        copy(bodyWeightKg = NutritionLogic.effectiveWeightKg(weights, bodyWeightKg))
+
     /** kg x g/kg araligi; kilo yoksa ya da gecersizse null. */
     fun proteinRange(): ClosedFloatingPointRange<Double>? {
         val w = bodyWeightKg ?: return null
@@ -40,13 +44,14 @@ object NutritionLogic {
         meals: List<Meal>,
         water: List<WaterLog>,
         goals: NutritionGoals,
+        weights: List<BodyWeight> = emptyList(),
     ): DailyNutrition {
         val d = date.toEpochDay()
         val m = meals.filter { it.epochDay == d }
         val protein = m.sumOf { it.proteinG }
         val kcal = m.sumOf { it.calories }
         val ml = water.filter { it.epochDay == d }.sumOf { it.ml }
-        val range = goals.proteinRange()
+        val range = goals.withEffectiveWeight(weights).proteinRange()
         return DailyNutrition(
             date = date, proteinG = protein, calories = kcal, waterMl = ml,
             proteinRange = range,
@@ -54,6 +59,15 @@ object NutritionLogic {
             waterRatio = if (goals.waterMl > 0) ml.toDouble() / goals.waterMl else null,
             calorieRatio = goals.calories?.takeIf { it > 0 }?.let { kcal.toDouble() / it },
         )
+    }
+
+    /**
+     * Kilo tek kaynak: body_weights'teki en son (gecerli) tarti; yoksa ayarlardaki kilo;
+     * ikisi de yoksa/gecersizse null. Uydurma varsayilan yok.
+     */
+    fun effectiveWeightKg(weights: List<BodyWeight>, settingsKg: Double?): Double? {
+        val latest = weights.filter { it.kg > 0.0 && it.kg.isFinite() }.maxByOrNull { it.epochDay }?.kg
+        return latest ?: settingsKg?.takeIf { it > 0.0 && it.isFinite() }
     }
 
     /** Tarihe gore artan tarti serisi. */

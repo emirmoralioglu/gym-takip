@@ -59,3 +59,60 @@ internal fun createV3Tables(db: SupportSQLiteDatabase) {
             "PRIMARY KEY(`epochDay`))"
     )
 }
+
+/**
+ * Eski Turkce katalog adi -> yeni Ingilizce ad. Kesin (harf katlamasiz) eslesme.
+ * Anahtarlar ve degerler birbirinden ayridir (zincirleme yeniden adlandirma olmaz).
+ */
+val LEGACY_EXERCISE_RENAMES: Map<String, String> = linkedMapOf(
+    "Eğimli bench press" to "Incline bench press",
+    "Dambıl göğüs press" to "Dumbbell bench press",
+    "Eğimli dambıl press" to "Incline dumbbell press",
+    "Dambıl fly" to "Dumbbell fly",
+    "Kablo crossover" to "Cable crossover",
+    "Şınav" to "Push-up",
+    "Chest press makinesi" to "Chest press machine",
+    "Incline chest press makinesi" to "Incline chest press machine",
+    "Barfiks" to "Pull-up",
+    "Tek kol dambıl row" to "One-arm dumbbell row",
+    "Oturarak kablo row" to "Seated cable row",
+    "Sırt ekstansiyonu" to "Back extension",
+    "Dambıl omuz press" to "Dumbbell shoulder press",
+    "Yan lateral raise" to "Lateral raise",
+    "Ön raise" to "Front raise",
+    "Arka omuz fly" to "Rear delt fly",
+    "Omuz silkme (shrug)" to "Shrug",
+    "Shoulder press makinesi" to "Shoulder press machine",
+    "Dambıl curl" to "Dumbbell curl",
+    "Çekiç curl" to "Hammer curl",
+    "French press" to "Overhead triceps extension",
+    "Bank dips" to "Bench dips",
+    "Ön squat" to "Front squat",
+    "Hamle (lunge)" to "Lunge",
+    "Baldır kaldırma" to "Calf raise",
+    "Bacak kaldırma" to "Leg raise",
+    "Ters crunch" to "Reverse crunch",
+    "Kablo crunch" to "Cable crunch",
+    "Koşu bandı" to "Treadmill",
+    "Bisiklet" to "Cycling",
+    "Eliptik" to "Elliptical",
+    "Kürek makinesi" to "Rowing machine",
+    "İp atlama" to "Jump rope",
+    "Yürüyüş" to "Walking",
+)
+
+/**
+ * v3 -> v4: eski Turkce katalog/plan adlari Ingilizce adlara cevrilir (yalniz UPDATE).
+ * Ozel egzersiz adlari esleme tablosunda olmadigi icin degismez. Satir silinmez.
+ */
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        LEGACY_EXERCISE_RENAMES.forEach { (old, new) ->
+            val args = arrayOf<Any?>(new, old)
+            db.execSQL("UPDATE `workout_entries` SET `exercise` = ? WHERE `exercise` = ?", args)
+            db.execSQL("UPDATE `plan_exercises` SET `name` = ? WHERE `name` = ?", args)
+            // custom_exercises.name birincil anahtar: hedef ad zaten varsa carpismayi atla.
+            db.execSQL("UPDATE OR IGNORE `custom_exercises` SET `name` = ? WHERE `name` = ?", args)
+        }
+    }
+}
