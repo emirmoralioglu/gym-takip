@@ -19,7 +19,15 @@ class ProgressChartTest {
         val p = ProgressChart.points(list, "squat", ChartRange.ALL, today)
         assertEquals(listOf(today.toEpochDay() - 9, today.toEpochDay() - 2), p.map { it.epochDay })
         assertEquals(100.0, p[1].maxKg, 0.0)
-        assertEquals(100.0 * (1 + 5 / 30.0), p[1].oneRm, 1e-9)
+        assertEquals(100.0 * (1 + 5 / 30.0), p[1].oneRm!!, 1e-9)
+    }
+
+    @Test fun highRepRowsAreSkippedFor1RmLine() {
+        val list = listOf(e(2, "Squat", 12, 20.0), e(2, "Squat", 100, 30.0), e(1, "Squat", 13, 20.0))
+        val p = ProgressChart.points(list, "Squat", ChartRange.ALL, today)
+        assertEquals(30.0, p[0].maxKg, 0.0)
+        assertEquals(20.0 * 1.4, p[0].oneRm!!, 1e-9) // 100 tekrarlik satir 1RM'e girmez
+        assertEquals(null, p[1].oneRm) // yalniz 13 tekrar: 1RM yok
     }
 
     @Test fun rangeBoundaries() {

@@ -36,6 +36,7 @@ import com.emir.gym.ui.ProgressScreen
 import com.emir.gym.ui.fmtKg
 import com.emir.gym.ui.SettingsScreen
 import com.emir.gym.ui.WeeklyScreen
+import com.emir.gym.ui.theme.GymTheme
 
 class MainActivity : ComponentActivity() {
     private val vm: GymViewModel by viewModels()
@@ -44,7 +45,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MaterialTheme {
+            GymTheme {
                 var tab by rememberSaveable { mutableIntStateOf(0) }
                 val snackbar = remember { SnackbarHostState() }
                 val error by vm.error.collectAsState()

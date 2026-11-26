@@ -12,9 +12,37 @@ class RecordsTest {
         WorkoutEntry(id, day, name, 3, reps, kg)
 
     @Test fun epleyFormula() {
-        assertEquals(100.0, Records.epley1Rm(100.0, 1), 1e-9)
-        assertEquals(130.0, Records.epley1Rm(100.0, 9), 1e-9) // 100 * (1 + 9/30) = 130
-        assertEquals(60.0 * 1.5, Records.epley1Rm(60.0, 15), 1e-9)
+        assertEquals(100.0, Records.epley1Rm(100.0, 1)!!, 1e-9)
+        assertEquals(130.0, Records.epley1Rm(100.0, 9)!!, 1e-9) // 100 * (1 + 9/30) = 130
+        assertEquals(60.0 * 1.4, Records.epley1Rm(60.0, 12)!!, 1e-9)
+    }
+
+    @Test fun oneRmOnlyForUpTo12Reps() {
+        assertEquals(20.0 * (1 + 12 / 30.0), Records.epley1Rm(20.0, 12)!!, 1e-9)
+        assertNull(Records.epley1Rm(20.0, 13))
+        assertNull(Records.epley1Rm(20.0, 100)) // eskiden 86.7 kg cikiyordu
+    }
+
+    @Test fun highRepSetsAreNot1RmRecords() {
+        val existing = listOf(e(1, 1, "Squat", 5, 20.0))
+        // 100 tekrar: 1RM rekoru degil, ama agirlik rekoru tekrardan bagimsiz calisir.
+        assertNull(Records.check(existing, e(0, 2, "Squat", 100, 20.0)))
+        val n = Records.check(existing, e(0, 2, "Squat", 13, 25.0))!!
+        assertTrue(n.weightBroken)
+        assertFalse(n.oneRmBroken)
+        // 12 tekrar hala sayilir.
+        assertTrue(Records.check(existing, e(0, 2, "Squat", 12, 20.0))!!.oneRmBroken)
+        // 13 tekrar ayni agirlikla rekor degil.
+        assertNull(Records.check(existing, e(0, 2, "Squat", 13, 20.0)))
+    }
+
+    @Test fun computeIgnoresHighRepsFor1Rm() {
+        val r = Records.compute(listOf(e(1, 1, "Squat", 100, 20.0), e(2, 2, "Squat", 12, 10.0))).single()
+        assertEquals(10.0 * 1.4, r.best1Rm!!, 1e-9)
+        assertEquals(2L, r.best1RmDay)
+        assertEquals(20.0, r.maxWeightKg, 0.0)
+        val only = Records.compute(listOf(e(1, 1, "Squat", 100, 20.0))).single()
+        assertNull(only.best1Rm)
     }
 
     @Test fun computePicksMaxWeightAndMax1RmSeparately() {
@@ -26,7 +54,7 @@ class RecordsTest {
         val r = Records.compute(list).single()
         assertEquals(110.0, r.maxWeightKg, 0.0)
         assertEquals(20L, r.maxWeightDay)
-        assertEquals(100.0 * (1 + 10 / 30.0), r.best1Rm, 1e-9)
+        assertEquals(100.0 * (1 + 10 / 30.0), r.best1Rm!!, 1e-9)
         assertEquals(10L, r.best1RmDay)
     }
 

@@ -30,7 +30,8 @@ class ExerciseCatalogTest {
         assertNotNull(ExerciseCatalog.validateCustom("Kettlebell swing", null, custom))
         assertNotNull(ExerciseCatalog.validateCustom("squat", MuscleGroup.BACAK, custom)) // katalogda var
         assertNotNull(ExerciseCatalog.validateCustom("LANDMINE PRESS", MuscleGroup.OMUZ, custom)) // ozelde var
-        assertNotNull(ExerciseCatalog.validateCustom("x".repeat(41), MuscleGroup.OMUZ, custom))
+        assertNotNull(ExerciseCatalog.validateCustom("x".repeat(61), MuscleGroup.OMUZ, custom))
+        assertNull(ExerciseCatalog.validateCustom("x".repeat(60), MuscleGroup.OMUZ, custom))
     }
 
     @Test fun turkishCaseFolding() {

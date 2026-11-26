@@ -1,5 +1,6 @@
 package com.emir.gym.ui
 
+import com.emir.gym.ui.theme.tabular
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -116,7 +117,7 @@ fun DailyScreen(
                                         if (group != null) "$date · ${group.label}" else date,
                                         style = MaterialTheme.typography.bodySmall,
                                     )
-                                    Text("${e.sets} set × ${e.reps} tekrar × ${fmtKg(e.weightKg)} kg")
+                                    Text("${e.sets} set × ${e.reps} tekrar × ${fmtKg(e.weightKg)} kg", style = MaterialTheme.typography.bodyLarge.tabular())
                                     if (e.note.isNotEmpty()) Text(e.note, style = MaterialTheme.typography.bodySmall)
                                 }
                                 IconButton(onClick = { deleting = e }) {

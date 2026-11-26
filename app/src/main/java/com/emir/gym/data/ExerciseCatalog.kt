@@ -71,7 +71,7 @@ object ExerciseCatalog {
         return custom.firstOrNull { key(it.name) == k }?.let { MuscleGroup.fromKey(it.muscleGroup) }
     }
 
-    const val MAX_NAME_LENGTH = 40
+    const val MAX_NAME_LENGTH = 60
 
     /** Ozel egzersiz adi dogrulama. Basarisizsa Turkce hata mesaji, basariliysa null. */
     fun validateCustom(name: String, group: MuscleGroup?, custom: List<CustomExercise>): String? {
