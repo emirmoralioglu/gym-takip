@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         PlanDay::class, PlanExercise::class, ActivityLog::class,
         Meal::class, WaterLog::class, BodyWeight::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -31,7 +31,7 @@ abstract class AppDatabase : RoomDatabase() {
         fun get(context: Context): AppDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(
                 context.applicationContext, AppDatabase::class.java, "gym.db"
-            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
                 .addCallback(seedOnCreate)
                 .build().also { instance = it }
         }

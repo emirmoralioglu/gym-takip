@@ -60,7 +60,7 @@ class RecordsTest {
 
     @Test fun computeSkipsZeroWeightAndSortsByName() {
         val list = listOf(e(1, 1, "Şınav", 20, 0.0), e(2, 1, "Squat", 5, 80.0), e(3, 1, "Barfiks", 5, 10.0))
-        assertEquals(listOf("Barfiks", "Squat"), Records.compute(list).map { it.exercise })
+        assertEquals(listOf("Pull-up", "Squat"), Records.compute(list).map { it.exercise })
     }
 
     @Test fun heavierSetBreaksRecord() {

@@ -86,7 +86,7 @@ class MigrationTest {
         }
         db.query("SELECT name, sets, targetReps, restSeconds, posture FROM plan_exercises WHERE weekday = 1 ORDER BY position").use { c ->
             c.moveToFirst()
-            assertEquals("Chest press makinesi", c.getString(0)); assertEquals(3, c.getInt(1))
+            assertEquals("Chest press machine", c.getString(0)); assertEquals(3, c.getInt(1))
             assertEquals(8, c.getInt(2)); assertEquals(90, c.getInt(3)); assertEquals(0, c.getInt(4))
             c.moveToLast(); assertEquals("Reverse pec deck", c.getString(0)); assertEquals(1, c.getInt(4))
         }

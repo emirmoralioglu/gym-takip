@@ -1,6 +1,8 @@
 package com.emir.gym.data
 
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.TemporalAdjusters
 
 enum class DayStatus { TAMAMLANDI, PLANLI, DINLENME, KACIRILDI }
 
@@ -42,14 +44,18 @@ object PlanLogic {
     fun planFor(date: LocalDate, days: List<PlanDay>, exercises: List<PlanExercise>): DayPlan? =
         planOf(date.dayOfWeek.value, days, exercises)
 
-    /** Haftalik ilerleme. weekStart Pazartesi olmali; today gecmis/gelecek ayrimi icin. */
+    /**
+     * Haftalik ilerleme. Verilen tarih haftanin herhangi bir gunu olabilir; o haftanin Pazartesi'sine
+     * normalize edilir (sonuctaki weekStart Pazartesi'dir). today gecmis/gelecek ayrimi icin.
+     */
     fun weekProgress(
-        weekStart: LocalDate,
+        weekStartInput: LocalDate,
         today: LocalDate,
         days: List<PlanDay>,
         entries: List<WorkoutEntry>,
         activities: List<ActivityLog>,
     ): WeekProgress {
+        val weekStart = weekStartInput.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
         val lifted = entries.map { it.epochDay }.toSet()
         val swum = activities.filter { it.type == ActivityType.YUZME }.map { it.epochDay }.toSet()
         val list = (0..6).map { i ->

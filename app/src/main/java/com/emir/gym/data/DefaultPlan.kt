@@ -24,23 +24,23 @@ object DefaultPlan {
         )
 
     val exercises: List<PlanExercise> = listOf(
-        ex(1, 0, "Chest press makinesi", MuscleGroup.GOGUS, "Kontrollü, göğüs açık"),
+        ex(1, 0, "Chest press machine", MuscleGroup.GOGUS, "Kontrollü, göğüs açık"),
         ex(1, 1, "Lat pulldown", MuscleGroup.SIRT, "Kürek kemiklerini geri-aşağı çek"),
-        ex(1, 2, "Oturarak kablo row", MuscleGroup.SIRT, "Üst sırt, duruş için kritik"),
-        ex(1, 3, "Shoulder press makinesi", MuscleGroup.OMUZ, "Omuz kontrolü"),
+        ex(1, 2, "Seated cable row", MuscleGroup.SIRT, "Üst sırt, duruş için kritik"),
+        ex(1, 3, "Shoulder press machine", MuscleGroup.OMUZ, "Omuz kontrolü"),
         ex(1, 4, "Reverse pec deck", MuscleGroup.OMUZ, "Arka omuz + duruş", posture = true),
         ex(2, 0, "Leg press", MuscleGroup.BACAK, "Ana bacak hareketi"),
         ex(2, 1, "Leg curl", MuscleGroup.BACAK, "Hamstring"),
         ex(2, 2, "Leg extension", MuscleGroup.BACAK, "Quad izolasyon"),
-        ex(2, 3, "Baldır kaldırma", MuscleGroup.BACAK, "Baldır, tam hareket açıklığı"),
-        ex(4, 0, "Incline chest press makinesi", MuscleGroup.GOGUS, "Üst göğüs"),
-        ex(4, 1, "Oturarak kablo row", MuscleGroup.SIRT, "Üst sırt, duruş"),
-        ex(4, 2, "Yan lateral raise", MuscleGroup.OMUZ, "Makine/cable; yan omuz, hafif ağırlık, kontrollü"),
+        ex(2, 3, "Calf raise", MuscleGroup.BACAK, "Baldır, tam hareket açıklığı"),
+        ex(4, 0, "Incline chest press machine", MuscleGroup.GOGUS, "Üst göğüs"),
+        ex(4, 1, "Seated cable row", MuscleGroup.SIRT, "Üst sırt, duruş"),
+        ex(4, 2, "Lateral raise", MuscleGroup.OMUZ, "Makine/cable; yan omuz, hafif ağırlık, kontrollü"),
         ex(4, 3, "Face pull", MuscleGroup.OMUZ, "Rotator cuff + duruş", posture = true),
         ex(5, 0, "Hack squat", MuscleGroup.BACAK, "Veya Smith squat; quad + kalça"),
         ex(5, 1, "Romanian deadlift", MuscleGroup.BACAK, "Smith/makine; hamstring + kalça, sırt düz"),
         ex(5, 2, "Hip abduction", MuscleGroup.BACAK, "Kalça yanı"),
-        ex(5, 3, "Baldır kaldırma", MuscleGroup.BACAK, "Baldır"),
+        ex(5, 3, "Calf raise", MuscleGroup.BACAK, "Baldır"),
     )
 
     private const val DAY_SQL = "INSERT OR REPLACE INTO `plan_days` (`weekday`, `title`, `type`, `note`) VALUES (?, ?, ?, ?)"
