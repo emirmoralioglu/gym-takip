@@ -1,5 +1,6 @@
 package com.emir.gym.ui
 
+import com.emir.gym.ui.theme.tabular
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -52,7 +53,7 @@ private fun WeekCard(title: String, s: WeekSummary) {
                 style = MaterialTheme.typography.titleMedium,
             )
             Text("Toplam set: ${s.totalSets}")
-            Text("Toplam hacim: ${fmtKg(s.totalVolume)} kg")
+            Text("Toplam hacim: ${fmtKg(s.totalVolume)} kg", style = MaterialTheme.typography.bodyLarge.tabular())
             Text("Antrenman günü: ${s.trainingDays}")
             if (s.totalSets == 0) Text("Bu hafta kayıt yok.", style = MaterialTheme.typography.bodySmall)
             BarChart(s.dailyVolume)

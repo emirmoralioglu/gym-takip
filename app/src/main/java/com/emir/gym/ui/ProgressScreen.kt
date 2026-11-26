@@ -1,5 +1,6 @@
 package com.emir.gym.ui
 
+import com.emir.gym.ui.theme.tabular
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -87,10 +88,14 @@ private fun RecordCard(r: ExerciseRecord, onClick: () -> Unit) {
             Text(r.exercise, style = MaterialTheme.typography.titleMedium)
             Text(
                 "${stringResource(R.string.records_best_weight)}: ${fmtKg(r.maxWeightKg)} kg · ${LocalDate.ofEpochDay(r.maxWeightDay).format(dayFmt)}",
+                style = MaterialTheme.typography.bodyLarge.tabular(),
             )
-            Text(
-                "${stringResource(R.string.records_best_1rm)}: ${fmtKg1(r.best1Rm)} kg · ${LocalDate.ofEpochDay(r.best1RmDay).format(dayFmt)}",
-            )
+            if (r.best1Rm != null && r.best1RmDay != null) {
+                Text(
+                    "${stringResource(R.string.records_best_1rm)}: ${fmtKg1(r.best1Rm)} kg · ${LocalDate.ofEpochDay(r.best1RmDay).format(dayFmt)}",
+                    style = MaterialTheme.typography.bodyLarge.tabular(),
+                )
+            }
         }
     }
 }
@@ -134,8 +139,9 @@ private fun LineChart(points: List<ChartPoint>) {
     val kgColor = MaterialTheme.colorScheme.primary
     val rmColor = MaterialTheme.colorScheme.tertiary
     val grid = MaterialTheme.colorScheme.outlineVariant
-    val lo = points.minOf { minOf(it.maxKg, it.oneRm) }
-    val hi = points.maxOf { maxOf(it.maxKg, it.oneRm) }
+    val rmPoints = points.filter { it.oneRm != null }
+    val lo = points.minOf { minOf(it.maxKg, it.oneRm ?: it.maxKg) }
+    val hi = points.maxOf { maxOf(it.maxKg, it.oneRm ?: it.maxKg) }
     // Tek deger ya da cok dar aralikta cizgi tavana yapismasin.
     val pad = maxOf((hi - lo) * 0.1, 1.0)
     val yMin = maxOf(0.0, lo - pad)
@@ -154,15 +160,16 @@ private fun LineChart(points: List<ChartPoint>) {
             fun x(day: Long) = if (d1 == d0) w / 2 else ((day - d0).toFloat() / (d1 - d0)) * w
             fun y(v: Double) = (h - ((v - yMin) / (yMax - yMin)).toFloat() * h)
             for (i in 0..2) drawLine(grid, Offset(0f, h * i / 2), Offset(w, h * i / 2), 1f)
-            fun series(color: Color, value: (ChartPoint) -> Double) {
+            fun series(color: Color, pts: List<ChartPoint>, value: (ChartPoint) -> Double) {
                 val sw = 3.dp.toPx()
-                points.zipWithNext { a, b ->
+                pts.zipWithNext { a, b ->
                     drawLine(color, Offset(x(a.epochDay), y(value(a))), Offset(x(b.epochDay), y(value(b))), sw, StrokeCap.Round)
                 }
-                points.forEach { drawCircle(color, 4.dp.toPx(), Offset(x(it.epochDay), y(value(it)))) }
+                pts.forEach { drawCircle(color, 4.dp.toPx(), Offset(x(it.epochDay), y(value(it)))) }
             }
-            series(rmColor) { it.oneRm }
-            series(kgColor) { it.maxKg }
+            // 12+ tekrarli gunlerin 1RM'i yok; cizgi bu gunleri atlar.
+            series(rmColor, rmPoints) { it.oneRm!! }
+            series(kgColor, points) { it.maxKg }
         }
     }
     Row(Modifier.fillMaxWidth().padding(start = 48.dp), horizontalArrangement = Arrangement.SpaceBetween) {
@@ -171,6 +178,6 @@ private fun LineChart(points: List<ChartPoint>) {
     }
     Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(stringResource(R.string.chart_legend_weight), color = kgColor, style = MaterialTheme.typography.labelMedium)
-        Text(stringResource(R.string.chart_legend_1rm), color = rmColor, style = MaterialTheme.typography.labelMedium)
+        if (rmPoints.isNotEmpty()) Text(stringResource(R.string.chart_legend_1rm), color = rmColor, style = MaterialTheme.typography.labelMedium)
     }
 }

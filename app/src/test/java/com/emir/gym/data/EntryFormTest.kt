@@ -47,4 +47,11 @@ class EntryFormTest {
         assertTrue(p(w = "-5") is FormResult.Error)
         assertTrue(p(w = "NaN") is FormResult.Error)
     }
+
+    @Test fun nameLimitMatchesCustomExerciseLimit() {
+        assertEquals(60, ExerciseCatalog.MAX_NAME_LENGTH)
+        fun q(n: String) = EntryForm.parse(0, 1, n, "3", "10", "20", "")
+        assertTrue(q("x".repeat(60)) is FormResult.Ok)
+        assertTrue(q("x".repeat(61)) is FormResult.Error)
+    }
 }

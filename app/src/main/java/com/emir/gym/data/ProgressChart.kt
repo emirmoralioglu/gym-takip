@@ -8,8 +8,8 @@ enum class ChartRange(val label: String, val weeks: Int?) {
     ALL("Tümü", null),
 }
 
-/** Bir gun icin en agir kg ve en yuksek tahmini 1RM. */
-data class ChartPoint(val epochDay: Long, val maxKg: Double, val oneRm: Double)
+/** Bir gun icin en agir kg ve en yuksek tahmini 1RM (12+ tekrar satirlari atlanir; hic yoksa null). */
+data class ChartPoint(val epochDay: Long, val maxKg: Double, val oneRm: Double?)
 
 object ProgressChart {
     /** Aralik basi: bugun dahil son [weeks]*7 gun. null = sinirsiz. */
@@ -28,7 +28,7 @@ object ProgressChart {
             .filter { ExerciseCatalog.key(it.exercise) == k && it.weightKg > 0 }
             .filter { from == null || it.epochDay >= from }
             .groupBy { it.epochDay }
-            .map { (day, list) -> ChartPoint(day, list.maxOf { it.weightKg }, list.maxOf { Records.oneRm(it) }) }
+            .map { (day, list) -> ChartPoint(day, list.maxOf { it.weightKg }, list.mapNotNull { Records.oneRm(it) }.maxOrNull()) }
             .sortedBy { it.epochDay }
     }
 

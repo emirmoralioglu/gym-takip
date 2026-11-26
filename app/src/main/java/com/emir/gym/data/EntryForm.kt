@@ -17,7 +17,7 @@ object EntryForm {
     ): FormResult {
         val name = exercise.trim()
         if (name.isEmpty()) return FormResult.Error("Egzersiz adı boş olamaz")
-        if (name.length > 60) return FormResult.Error("Egzersiz adı en fazla 60 karakter olabilir")
+        if (name.length > ExerciseCatalog.MAX_NAME_LENGTH) return FormResult.Error("Egzersiz adı en fazla ${ExerciseCatalog.MAX_NAME_LENGTH} karakter olabilir")
         val s = sets.trim().toIntOrNull()
         if (s == null || s < 1) return FormResult.Error("Set sayısı en az 1 olmalı")
         if (s > MAX_SETS) return FormResult.Error("Set sayısı en fazla $MAX_SETS olabilir")
