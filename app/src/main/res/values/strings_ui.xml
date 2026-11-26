@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Hafta günleri (Pazartesi başlangıçlı) -->
+    <string-array name="ui_weekday_short">
+        <item>PZT</item>
+        <item>SAL</item>
+        <item>ÇAR</item>
+        <item>PER</item>
+        <item>CUM</item>
+        <item>CMT</item>
+        <item>PAZ</item>
+    </string-array>
+
+    <!-- Gün durumları (ekran okuyucu) -->
+    <string name="ui_day_done">tamamlandı</string>
+    <string name="ui_day_planned">planlı</string>
+    <string name="ui_day_rest">dinlenme</string>
+    <string name="ui_day_missed">kaçırıldı</string>
+    <string name="ui_day_today">bugün</string>
+
+    <!-- Set satırı -->
+    <string name="ui_set_col">SET</string>
+    <string name="ui_kg_col">KG</string>
+    <string name="ui_reps_col">TEKRAR</string>
+    <string name="ui_set_done">Seti tamamla</string>
+    <string name="ui_set_undo">Seti geri al</string>
+    <string name="ui_set_desc">Set %d</string>
+    <string name="ui_kg_unit">kg</string>
+    <string name="ui_reps_unit">tekrar</string>
+
+    <!-- Egzersiz kartı -->
+    <string name="ui_plan_format">%1$d×%2$d</string>
+    <string name="ui_sets_progress">%1$d/%2$d set</string>
+
+    <!-- İlerleme halkası -->
+    <string name="ui_ring_ratio">%1$d/%2$d</string>
+
+    <!-- Grafik -->
+    <string name="ui_chart_empty">Henüz veri yok.</string>
+    <string name="ui_chart_one_point">Çizgi için en az iki kayıt gerekir.</string>
+    <string name="ui_chart_desc">%1$s grafiği, %2$d nokta</string>
+
+    <!-- Dinlenme sayacı -->
+    <string name="ui_rest_label">DİNLENME</string>
+    <string name="ui_rest_pause">Duraklat</string>
+    <string name="ui_rest_resume">Sürdür</string>
+    <string name="ui_rest_add">30 saniye ekle</string>
+    <string name="ui_rest_add_short">+30</string>
+    <string name="ui_rest_skip">Sayacı kapat</string>
+
+    <!-- Beslenme -->
+    <string name="ui_macro_value">%1$s / %2$s %3$s</string>
+    <string name="ui_meal_done">Öğün işaretlendi</string>
+</resources>

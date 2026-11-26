@@ -15,8 +15,11 @@ object Spacing {
     /** Ekran kenar boşluğu (telefon). */
     val screenHorizontal = 16.dp
 
-    /** Liste öğeleri arası. */
-    val listItemGap = 8.dp
+    /** Kart iç boşluğu. */
+    val cardPadding = 16.dp
+
+    /** Liste öğeleri ve kartlar arası. */
+    val listItemGap = 10.dp
 
     /** Dokunma hedefi alt sınırı. */
     val minTouchTarget = 48.dp
