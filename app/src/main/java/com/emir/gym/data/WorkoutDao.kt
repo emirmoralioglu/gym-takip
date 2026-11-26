@@ -16,6 +16,17 @@ interface WorkoutDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entry: WorkoutEntry): Long
 
+    // Liste tek islemde yazilir: ya hepsi ya hicbiri (kopyalama).
+    @Insert
+    suspend fun insertAll(entries: List<WorkoutEntry>)
+
     @Delete
     suspend fun delete(entry: WorkoutEntry)
+
+    @Query("SELECT * FROM custom_exercises ORDER BY name")
+    fun observeCustom(): Flow<List<CustomExercise>>
+
+    // Ayni ad varsa yazmaz, -1 doner.
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insertCustom(exercise: CustomExercise): Long
 }
