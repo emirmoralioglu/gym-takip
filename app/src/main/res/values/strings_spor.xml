@@ -1,0 +1,59 @@
+<resources>
+    <string name="tab_daily">Günlük</string>
+    <string name="tab_weekly">Haftalık</string>
+    <string name="tab_progress">İlerleme</string>
+    <string name="tab_settings">Ayarlar</string>
+
+    <string name="rest_title">Dinlenme sayacı</string>
+    <string name="rest_seconds">%d sn</string>
+    <string name="rest_custom">Özel</string>
+    <string name="rest_custom_title">Özel süre</string>
+    <string name="rest_custom_label">Saniye (1-3600)</string>
+    <string name="rest_custom_error">1 ile 3600 arasında bir saniye gir</string>
+    <string name="rest_start">Başlat</string>
+    <string name="rest_cancel">İptal</string>
+    <string name="rest_running">Dinleniyor: %s</string>
+
+    <string name="exercise_label">Egzersiz</string>
+    <string name="exercise_pick">Egzersiz seç</string>
+    <string name="exercise_picker_title">Egzersiz seç</string>
+    <string name="exercise_add_custom">Kendi egzersizini ekle</string>
+    <string name="exercise_custom_title">Yeni egzersiz</string>
+    <string name="exercise_custom_name">Egzersiz adı</string>
+    <string name="exercise_custom_group">Kas grubu</string>
+    <string name="exercise_custom_section">Eklediklerim</string>
+    <string name="action_add">Ekle</string>
+    <string name="action_cancel">Vazgeç</string>
+    <string name="action_close">Kapat</string>
+    <string name="action_ok">Tamam</string>
+
+    <string name="copy_button">Önceki antrenmanı kopyala</string>
+    <string name="copy_title">Antrenmanı kopyala</string>
+    <string name="copy_last_week">Geçen haftanın aynı günü (%s)</string>
+    <string name="copy_pick_day">Gün seç</string>
+    <string name="copy_pick_title">Kopyalanacak gün</string>
+    <string name="copy_none_selectable">Kopyalanabilecek geçmiş kayıt yok.</string>
+    <string name="copy_empty_source">%s tarihinde kayıt yok.</string>
+    <string name="copy_same_day">Kaynak ve hedef gün aynı olamaz.</string>
+    <string name="copy_confirm_title">Zaten kopyalanmış olabilir</string>
+    <string name="copy_confirm_text">Bugün %1$d kayıt zaten aynı egzersiz, set, tekrar ve ağırlıkla var. Yine de %2$d kayıt kopyalansın mı?</string>
+    <string name="copy_confirm_yes">Yine de kopyala</string>
+    <string name="copy_target_info">Seçilen günün kayıtları bugüne eklenir; sonra düzenleyebilirsin.</string>
+
+    <string name="record_title">Yeni rekor!</string>
+    <string name="record_weight">En ağır kg: %1$s kg (önceki %2$s kg)</string>
+    <string name="record_1rm">Tahmini 1RM: %1$s kg (önceki %2$s kg)</string>
+
+    <string name="progress_records">Rekorlar</string>
+    <string name="progress_chart">Gelişim</string>
+    <string name="records_empty">Henüz ağırlıklı kayıt yok. Kayıt ekledikçe rekorların burada görünür.</string>
+    <string name="records_best_weight">En ağır</string>
+    <string name="records_best_1rm">Tahmini 1RM</string>
+    <string name="records_epley_note">1RM, Epley formülüyle tahmin edilir: kg × (1 + tekrar / 30).</string>
+    <string name="chart_pick_exercise">Egzersiz</string>
+    <string name="chart_empty">Bu aralıkta bu egzersiz için kayıt yok.</string>
+    <string name="chart_one_point">Çizgi için en az iki farklı günde kayıt gerekir.</string>
+    <string name="chart_legend_weight">En ağır kg</string>
+    <string name="chart_legend_1rm">Tahmini 1RM</string>
+    <string name="chart_no_exercise">Grafik için önce ağırlıklı bir kayıt ekle.</string>
+</resources>

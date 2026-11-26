@@ -23,6 +23,22 @@ class EntryFormTest {
         assertEquals(7L, (p(id = 7) as FormResult.Ok).entry.id)
     }
 
+    @Test fun muscleGroupStoredOnlyWhenKnown() {
+        val ok = EntryForm.parse(0, 1, "Squat", "3", "5", "100", "", "BACAK") as FormResult.Ok
+        assertEquals("BACAK", ok.entry.muscleGroup)
+        val bad = EntryForm.parse(0, 1, "Squat", "3", "5", "100", "", "UYDURMA") as FormResult.Ok
+        assertEquals("", bad.entry.muscleGroup)
+        assertEquals("", (p() as FormResult.Ok).entry.muscleGroup)
+    }
+
+    @Test fun upperLimitsRejected() {
+        assertTrue(p(sets = "101") is FormResult.Error)
+        assertTrue(p(reps = "1001") is FormResult.Error)
+        assertTrue(p(w = "1000,5") is FormResult.Error)
+        assertTrue(p(name = "x".repeat(61)) is FormResult.Error)
+        assertTrue(p(sets = "100", reps = "1000", w = "1000") is FormResult.Ok)
+    }
+
     @Test fun invalidInputsRejected() {
         assertTrue(p(name = "  ") is FormResult.Error)
         assertTrue(p(sets = "0") is FormResult.Error)
