@@ -23,6 +23,7 @@ import com.emir.gym.ui.RowKey
 import com.emir.gym.ui.RowState
 import java.time.LocalDate
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -97,8 +98,14 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Gecmis ekranindan silme; bagli bir set satiri varsa baglantisi da kaldirilir. */
     fun delete(entry: WorkoutEntry) = run("Silinemedi") {
-        dao.delete(entry)
         deletedIds += entry.id
+        setRows.value.filterValues { it.entryId == entry.id }.keys.forEach { editJobs.remove(it)?.cancel() }
+        try {
+            dao.delete(entry)
+        } catch (e: Exception) {
+            deletedIds -= entry.id
+            throw e
+        }
         setRows.update { m -> m.mapValues { (_, st) -> if (st.entryId == entry.id) st.copy(entryId = null) else st } }
     }
 
@@ -145,14 +152,20 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         editJobs[key] = viewModelScope.launch {
             delay(EDIT_DEBOUNCE_MS)
             try {
+                // Bekleme sirasinda geri alindi/silindiyse ya da satirin baglantisi degistiyse hicbir sey yazilmaz.
+                if (id in deletedIds || setRows.value[key]?.entryId != id) return@launch
                 val old = entries.value?.firstOrNull { it.id == id }
-                when (val r = FolderLogic.toEntry(id, key.epochDay, plan, next, null, old?.note ?: "")) {
+                when (val r = FolderLogic.editedEntry(old, key.epochDay, plan, next)) {
                     is FormResult.Error -> error.value = r.message
                     is FormResult.Ok -> {
-                        val e = old?.let { r.entry.copy(exercise = it.exercise, muscleGroup = it.muscleGroup) } ?: r.entry
+                        val e = r.entry
                         val before = entries.value
                         dao.upsert(e)
-                        if (before != null) newRecord.value = Records.check(before, e)
+                        // Ayni bitmis deger icin rekor bir kez bildirilir.
+                        if (before != null && notifiedRecordFor[id] != e.weightKg to e.reps) {
+                            val rec = Records.check(before, e)
+                            if (rec != null) { newRecord.value = rec; notifiedRecordFor[id] = e.weightKg to e.reps }
+                        }
                     }
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
@@ -163,13 +176,15 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    private val notifiedRecordFor = mutableMapOf<Long, Pair<Double, Int>>()
+
     /** Seti isaretler (kayit yazar, dinlenme sayacini baslatir) ya da geri alir (kaydi siler). */
     fun toggleSet(key: RowKey, plan: PlanExercise, done: Boolean) {
         val row = setRows.value[key] ?: return
         if (key in pendingRows) return
         if (done) {
             if (row.done) return
-            val hint = entries.value?.let { FolderLogic.lastKg(plan.name, it) }
+            val hint = entries.value?.let { FolderLogic.lastKg(plan.name, it, key.epochDay) }
             val r = FolderLogic.toEntry(0, key.epochDay, plan, row, hint)
             if (r is FormResult.Error) { error.value = r.message; return }
             val entry = (r as FormResult.Ok).entry
@@ -181,7 +196,10 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
                     setRows.update { m ->
                         if (key in m) m + (key to RowState(FolderLogic.kgText(entry.weightKg), entry.reps.toString(), id)) else m
                     }
-                    if (before != null) newRecord.value = Records.check(before, entry)
+                    if (before != null) {
+                        newRecord.value = Records.check(before, entry)
+                        if (newRecord.value != null) notifiedRecordFor[id] = entry.weightKg to entry.reps
+                    }
                     startRest(plan.restSeconds)
                 } catch (e: Exception) {
                     error.value = "Kaydedilemedi: ${e.message ?: "bilinmeyen hata"}"
@@ -192,16 +210,29 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
             }
         } else {
             val id = row.entryId ?: return
-            editJobs.remove(key)?.cancel()
             val entry = entries.value?.firstOrNull { it.id == id }
-                ?: WorkoutEntry(id, key.epochDay, plan.name, 1, row.reps.toIntOrNull() ?: 1, 0.0)
+            if (entry == null) { error.value = "Kayıt henüz yüklenmedi; tekrar dene"; return }
+            if (!FolderLogic.isBoundTo(entry, key.epochDay, plan)) {
+                // Kayit artik tek setlik degil (Gecmis'ten duzenlenmis): asla silinmez, yalnizca baglanti kopar.
+                editJobs.remove(key)?.cancel()
+                setRows.update { m -> m[key]?.let { m + (key to it.copy(entryId = null)) } ?: m }
+                error.value = "Bu kayıt artık tek set değil; silinmedi. Geçmiş bölümünden düzenle"
+                return
+            }
+            val pendingEdit = editJobs.remove(key)
+            deletedIds += id
             pendingRows += key
             viewModelScope.launch {
                 try {
+                    // Bekleyen duzenleme bitmeden silinmez; silinen kayit yeniden yazilamaz.
+                    pendingEdit?.cancelAndJoin()
                     dao.delete(entry)
-                    deletedIds += id
                     setRows.update { m -> m[key]?.let { m + (key to it.copy(entryId = null)) } ?: m }
+                } catch (e: kotlinx.coroutines.CancellationException) {
+                    deletedIds -= id
+                    throw e
                 } catch (e: Exception) {
+                    deletedIds -= id
                     error.value = "Silinemedi: ${e.message ?: "bilinmeyen hata"}"
                 } finally {
                     pendingRows -= key

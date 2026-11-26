@@ -88,7 +88,13 @@ fun AfterCard(vm: GymViewModel, epochDay: Long) {
     var custom by remember { mutableStateOf<ActivityType?>(null) }
     val context = LocalContext.current
 
+    var lastAddMs by remember { androidx.compose.runtime.mutableLongStateOf(0L) }
+
     fun add(type: ActivityType, minutes: Int) {
+        // Cift dokunusa karsi kisa koruma.
+        val now = System.currentTimeMillis()
+        if (now - lastAddMs < 700L) return
+        lastAddMs = now
         vm.saveActivity(ActivityLog(epochDay = epochDay, type = type, minutes = minutes))
         val label = context.getString(if (type == ActivityType.SAUNA) R.string.screens_act_sauna else R.string.screens_act_steam)
         vm.notify(context.getString(R.string.screens_after_added, label, minutes))

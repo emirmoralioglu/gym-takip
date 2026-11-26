@@ -147,6 +147,71 @@ class FolderLogicTest {
         assertFalse(other in rows)
     }
 
+    @Test fun reconcileUnbindsRowWhenEntryBecameBulk() {
+        val cur = mapOf(key(0) to RowState("60", "8", 11))
+        val bulk = e(11, mon, sets = 3)
+        val rows = FolderLogic.reconcile(cur, listOf(bench), mon.toEpochDay(), listOf(bulk))
+        assertTrue(rows.values.none { it.done })
+        assertEquals(RowState("", "8", null), rows[key(0)])
+    }
+
+    @Test fun reconcileUnbindsWhenEntryMovedToOtherDateOrExercise() {
+        val cur = mapOf(key(0) to RowState("60", "8", 11))
+        val moved = FolderLogic.reconcile(cur, listOf(bench), mon.toEpochDay(), listOf(e(11, mon.minusWeeks(1))))
+        assertFalse(moved[key(0)]!!.done)
+        val renamed = FolderLogic.reconcile(cur, listOf(bench), mon.toEpochDay(), listOf(e(11, mon, name = "Lat pulldown")))
+        assertFalse(renamed[key(0)]!!.done)
+    }
+
+    @Test fun reconcileNewEntryNeverOverwritesBoundRow() {
+        // Satir 0 id 11'e bagli; 12 numarali kayit bagsiz: satir 1'e gitmeli, satir 0 bozulmamali.
+        val cur = mapOf(key(0) to RowState("60", "8", 11))
+        val rows = FolderLogic.reconcile(cur, listOf(bench), mon.toEpochDay(), listOf(e(11, mon), e(12, mon, kg = 70.0)))
+        assertEquals(11L, rows[key(0)]?.entryId)
+        assertEquals(12L, rows[key(1)]?.entryId)
+    }
+
+    // --- bagli kayit korumasi ---
+    @Test fun isBoundToRequiresSingleSetSameDayAndExercise() {
+        assertTrue(FolderLogic.isBoundTo(e(1, mon), mon.toEpochDay(), bench))
+        assertFalse(FolderLogic.isBoundTo(e(1, mon, sets = 3), mon.toEpochDay(), bench))
+        assertFalse(FolderLogic.isBoundTo(e(1, mon.plusDays(1)), mon.toEpochDay(), bench))
+        assertFalse(FolderLogic.isBoundTo(e(1, mon, name = "Squat"), mon.toEpochDay(), bench))
+    }
+
+    @Test fun editedEntryBlankKgNeverWritesZero() {
+        val r = FolderLogic.editedEntry(e(1, mon, kg = 60.0), mon.toEpochDay(), bench, RowState("", "8", 1))
+        assertTrue(r is FormResult.Error)
+        assertTrue(FolderLogic.editedEntry(e(1, mon), mon.toEpochDay(), bench, RowState("  ", "8", 1)) is FormResult.Error)
+    }
+
+    @Test fun editedEntryRefusesBulkOrMissingEntry() {
+        assertTrue(FolderLogic.editedEntry(e(1, mon, sets = 3), mon.toEpochDay(), bench, RowState("60", "8", 1)) is FormResult.Error)
+        assertTrue(FolderLogic.editedEntry(null, mon.toEpochDay(), bench, RowState("60", "8", 1)) is FormResult.Error)
+    }
+
+    @Test fun editedEntryKeepsIdNoteAndGroup() {
+        val old = WorkoutEntry(5, mon.toEpochDay(), "Bench press", 1, 8, 60.0, "not", "GOGUS")
+        val ok = FolderLogic.editedEntry(old, mon.toEpochDay(), bench, RowState("62,5", "6", 5)) as FormResult.Ok
+        assertEquals(WorkoutEntry(5, mon.toEpochDay(), "Bench press", 1, 6, 62.5, "not", "GOGUS"), ok.entry)
+    }
+
+    // --- ipucu ---
+    @Test fun lastKgIgnoresLaterDatesAndZeroKg() {
+        val list = listOf(
+            e(1, mon.minusWeeks(2), kg = 50.0), e(2, mon.minusWeeks(1), kg = 55.0),
+            e(3, mon.minusWeeks(1), kg = 0.0),e(4, mon.plusWeeks(1), kg = 99.0),
+        )
+        assertEquals(55.0, FolderLogic.lastKg("Bench press", list, mon.toEpochDay())!!, 0.0)
+        assertEquals(50.0, FolderLogic.lastKg("Bench press", list, mon.minusWeeks(1).toEpochDay() - 1)!!, 0.0)
+        assertNull(FolderLogic.lastKg("Bench press", list, mon.minusWeeks(3).toEpochDay()))
+    }
+
+    @Test fun lastKgSameDayCountsAndPrefersNewestId() {
+        val list = listOf(e(1, mon, kg = 60.0), e(2, mon, kg = 62.5))
+        assertEquals(62.5, FolderLogic.lastKg("bench press", list, mon.toEpochDay())!!, 0.0)
+    }
+
     // --- satir -> kayit ---
     @Test fun toEntryWritesSingleSetWithPlanGroupAndDate() {
         val r = FolderLogic.toEntry(0, mon.toEpochDay(), bench, RowState("62,5", "8"), null) as FormResult.Ok

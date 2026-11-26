@@ -238,7 +238,7 @@ private fun WeightPlan(
         exercises.forEach { pe ->
             val sets = rows.filterKeys { it.planId == pe.id && it.epochDay == epochDay }.toSortedMap(compareBy<RowKey> { it.index })
             val progress = PlanLogic.exerciseProgress(pe, date, entries)
-            val hint = FolderLogic.lastKg(pe.name, entries)?.let(FolderLogic::kgText)
+            val hint = FolderLogic.lastKg(pe.name, entries, epochDay)?.let(FolderLogic::kgText)
             val bulk = FolderLogic.lines(
                 entries.filter { it.epochDay == epochDay && it.sets > 1 && ExerciseCatalog.key(it.exercise) == ExerciseCatalog.key(pe.name) },
             )

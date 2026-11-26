@@ -65,9 +65,30 @@ object FolderLogic {
 
     private fun sameExercise(e: WorkoutEntry, key: String) = ExerciseCatalog.key(e.exercise) == key
 
-    /** Son kullanilan agirlik (hint); 0 ya da yoksa null. */
-    fun lastKg(name: String, entries: List<WorkoutEntry>): Double? =
-        PlanLogic.lastEntry(name, entries)?.weightKg?.takeIf { it > 0.0 }
+    /**
+     * Son kullanilan agirlik (hint): [onOrBeforeDay] dahil o tarihe kadarki, kg>0 olan en yeni kayit
+     * (tarih, sonra id). Sonraki tarihli kayitlar ve 0 kg'lik kayitlar sayilmaz; yoksa null.
+     */
+    fun lastKg(name: String, entries: List<WorkoutEntry>, onOrBeforeDay: Long): Double? {
+        val k = ExerciseCatalog.key(name)
+        return entries.filter { sameExercise(it, k) && it.weightKg > 0.0 && it.epochDay <= onOrBeforeDay }
+            .maxWithOrNull(compareBy({ it.epochDay }, { it.id }))?.weightKg
+    }
+
+    /** Kayit, bu tarihteki bu plan hareketinin tek setlik (sets=1) satirina baglanabilir mi? */
+    fun isBoundTo(e: WorkoutEntry, epochDay: Long, plan: PlanExercise): Boolean =
+        e.sets == 1 && e.epochDay == epochDay && sameExercise(e, ExerciseCatalog.key(plan.name))
+
+    /**
+     * Isaretli satirin duzenlenmis kaydi. Eski kayit yoksa, artik tek setlik degilse ya da kg bos ise
+     * yazma yapilmaz (Error): kayit eski degerinde kalir, sessiz 0 kg yazilmaz.
+     */
+    fun editedEntry(old: WorkoutEntry?, epochDay: Long, plan: PlanExercise, row: RowState): FormResult {
+        if (old == null) return FormResult.Error("Kayıt bulunamadı; değişiklik yazılmadı")
+        if (!isBoundTo(old, epochDay, plan)) return FormResult.Error("Bu kayıt artık tek set değil; Geçmiş bölümünden düzenle")
+        if (row.kg.isBlank()) return FormResult.Error("Ağırlık boş; kayıt eski değerinde bırakıldı")
+        return EntryForm.parse(old.id, epochDay, old.exercise, "1", row.reps, row.kg, old.note, old.muscleGroup)
+    }
 
     /**
      * Set satirlarini o tarihin kayitlarindan yeniden kurar.
@@ -94,10 +115,14 @@ object FolderLogic {
             val existing = current.filterKeys { it.planId == pe.id && it.epochDay == epochDay }
             val rows = sortedMapOf<Int, RowState>()
             existing.forEach { (key, st) ->
-                val entry = st.entryId?.let { id -> singles.firstOrNull { it.id == id } }
-                rows[key.index] = if (entry != null && !matches(st, entry)) {
-                    st.copy(kg = kgText(entry.weightKg), reps = entry.reps.toString())
-                } else st
+                // Bagli kayit listede var ama artik bu satira ait degilse (toplu kayit oldu, tarih/hareket degisti)
+                // bag kopar: satir bos kurulur, kayit dokunulmadan kalir.
+                val entry = st.entryId?.let { id -> entries.firstOrNull { it.id == id } }
+                rows[key.index] = when {
+                    entry != null && !isBoundTo(entry, epochDay, pe) -> RowState("", pe.targetReps.toString())
+                    entry != null && !matches(st, entry) -> st.copy(kg = kgText(entry.weightKg), reps = entry.reps.toString())
+                    else -> st
+                }
             }
             val claimed = rows.values.mapNotNull { it.entryId }.toSet()
             val unclaimed = singles.filter { it.id !in claimed && it.id !in ignoreIds }
