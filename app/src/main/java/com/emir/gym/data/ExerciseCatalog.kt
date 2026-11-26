@@ -34,6 +34,7 @@ object ExerciseCatalog {
             MuscleGroup.GOGUS,
             "Bench press", "Eğimli bench press", "Dambıl göğüs press", "Eğimli dambıl press",
             "Dambıl fly", "Kablo crossover", "Şınav", "Paralel bar dips",
+            "Chest press makinesi", "Incline chest press makinesi",
         ) + g(
             MuscleGroup.SIRT,
             "Deadlift", "Lat pulldown", "Barfiks", "Barbell row", "Tek kol dambıl row",
@@ -42,6 +43,7 @@ object ExerciseCatalog {
             MuscleGroup.OMUZ,
             "Overhead press", "Dambıl omuz press", "Yan lateral raise", "Ön raise",
             "Arka omuz fly", "Face pull", "Omuz silkme (shrug)",
+            "Shoulder press makinesi", "Reverse pec deck",
         ) + g(
             MuscleGroup.KOL,
             "Barbell curl", "Dambıl curl", "Çekiç curl", "Preacher curl",
@@ -50,6 +52,7 @@ object ExerciseCatalog {
             MuscleGroup.BACAK,
             "Squat", "Ön squat", "Leg press", "Romanian deadlift", "Hamle (lunge)",
             "Bulgarian split squat", "Leg extension", "Leg curl", "Baldır kaldırma", "Hip thrust",
+            "Hack squat", "Hip abduction",
         ) + g(
             MuscleGroup.KARIN,
             "Crunch", "Plank", "Bacak kaldırma", "Ters crunch", "Kablo crunch",
