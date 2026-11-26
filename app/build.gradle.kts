@@ -12,14 +12,23 @@ android {
         applicationId = "com.emir.gym"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        versionCode = 2
+        versionName = "0.2"
     }
     buildFeatures { compose = true }
+    sourceSets {
+        // Migration testi eski semayi (schemas/) assets olarak okur.
+        getByName("androidTest").assets.srcDir("$projectDir/schemas")
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -38,4 +47,8 @@ dependencies {
     ksp("androidx.room:room-compiler:2.8.5")
 
     testImplementation("junit:junit:4.13.2")
+
+    androidTestImplementation("androidx.room:room-testing:2.8.5")
+    androidTestImplementation("androidx.test.ext:junit:1.3.0")
+    androidTestImplementation("androidx.test:runner:1.7.0")
 }
