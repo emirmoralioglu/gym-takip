@@ -68,8 +68,8 @@ class ApiKeyStore(private val prefs: SharedPreferences, private val cipher: Secr
 
     fun get(provider: ProviderId): String? = prefs.getString(k(provider), null)?.let { cipher.decrypt(it) }
 
-    /** Kayitli ama cozulemeyen anahtar da "var" sayilir (kullaniciya yeniden girmesi soylenir). */
-    fun has(provider: ProviderId): Boolean = prefs.contains(k(provider))
+    /** Yalniz bu cihazda cozulebilen anahtar "var" sayilir; cozulemeyen/aktarilmis kayit "yok" (kullanici yeniden girer). */
+    fun has(provider: ProviderId): Boolean = get(provider) != null
 
     fun clear(provider: ProviderId) { prefs.edit().remove(k(provider)).commit() }
 

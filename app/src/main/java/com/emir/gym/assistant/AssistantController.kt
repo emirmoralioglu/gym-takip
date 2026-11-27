@@ -51,6 +51,7 @@ class AssistantController(
         contextText = { day, toolsOn -> AssistantContext.build(day, repository.readData(), toolsOn) },
         imageBase64 = { images.base64(it) },
         allowLocalCleartext = debuggable,
+        discardImages = { list -> list.forEach { images.delete(it.path) } },
     )
 
     val sending = MutableStateFlow(false)
@@ -68,9 +69,12 @@ class AssistantController(
         scope.launch {
             try {
                 val blocks = withContext(Dispatchers.IO) {
+                    val done = ArrayList<Block.Image>()
                     try {
-                        imageUris.map { uri -> images.prepare { app.contentResolver.openInputStream(uri) }.toBlock() }
+                        imageUris.map { uri -> images.prepare { app.contentResolver.openInputStream(uri) }.toBlock().also { done += it } }
                     } catch (e: ImageException) {
+                        // Biri basarisizsa oncekiler sahipsiz kalmasin.
+                        done.forEach { images.delete(it.path) }
                         error.value = AssistantError(AssistantError.Kind.BAD_REQUEST, e.message ?: "Görsel eklenemedi.")
                         null
                     }

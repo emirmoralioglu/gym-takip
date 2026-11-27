@@ -45,6 +45,10 @@ class KeystoreStoreTest {
         assertFalse(all, all.contains(key))
         assertFalse(all.contains("abcdefgh"))
         assertTrue(all.startsWith("v1:"))
+        // Base64 cozulmus haliyle de duz metin yok (yalniz Base64'e kodlama sifreleme degildir).
+        val decoded = String(android.util.Base64.decode(all.removePrefix("v1:"), android.util.Base64.NO_WRAP), Charsets.ISO_8859_1)
+        assertFalse(decoded.contains("abcdefgh"))
+        assertFalse(decoded.contains("sk-test"))
         // Dosyada da yok
         val xml = File(ctx.applicationInfo.dataDir, "shared_prefs/assistant_keys_test.xml")
         if (xml.exists()) assertFalse(xml.readText().contains("abcdefgh"))
@@ -73,6 +77,13 @@ class KeystoreStoreTest {
         assertFalse(store.set(ProviderId.GEMINI, "short"))
         assertFalse(store.set(ProviderId.GEMINI, "has space in the key 123"))
         assertFalse(store.has(ProviderId.GEMINI))
+    }
+
+    @Test fun undecryptableRecordCountsAsNoKey() {
+        // Baska cihazdan aktarilmis / bozuk sifreli kayit: has() false, get() null (tutarli).
+        prefs.edit().putString("key_GEMINI", "v1:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").apply()
+        assertFalse(store.has(ProviderId.GEMINI))
+        assertNull(store.get(ProviderId.GEMINI))
     }
 
     @Test fun maskHelper() {
@@ -168,6 +179,16 @@ class ImagePrepDeviceTest {
     private val prep = ImagePreparer(ctx)
 
     @After fun cleanup() { prep.deleteAll() }
+
+    @Test fun deleteRemovesImageAndPreviewOnlyInsideOwnDir() {
+        val p = prep.prepare { ByteArrayInputStream(jpeg(300, 200)) }
+        assertTrue(File(p.path).exists() && File(p.previewPath).exists())
+        prep.delete(p.path)
+        assertFalse(File(p.path).exists()); assertFalse(File(p.previewPath).exists())
+        val outside = File(ctx.cacheDir, "keep.txt").also { it.writeText("x") }
+        prep.delete(outside.absolutePath)
+        assertTrue(outside.exists()); outside.delete()
+    }
 
     private fun jpeg(w: Int, h: Int, orientation: Int? = null): ByteArray {
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888).apply { eraseColor(Color.rgb(200, 80, 40)) }

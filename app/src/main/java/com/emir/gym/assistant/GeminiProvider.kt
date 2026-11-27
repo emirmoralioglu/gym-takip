@@ -133,7 +133,7 @@ class GeminiProvider(
             val url = "${UrlPolicy.normalize(baseUrl)}/models/${java.net.URLEncoder.encode(req.model, "UTF-8")}:generateContent"
             val r = Http.postJson(url, mapOf("x-goog-api-key" to apiKey), GeminiWire.buildBody(req), connectMs, readMs)
             if (r.status in 200..299) GeminiWire.parseResponse(r.body)
-            else LlmResult(Status.ERROR, error = ErrorMapper.fromHttp(r.status, r.retryAfter, r.body))
+            else LlmResult(Status.ERROR, error = ErrorMapper.fromHttp(r.status, r.retryAfter, r.body, ProviderId.GEMINI))
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {

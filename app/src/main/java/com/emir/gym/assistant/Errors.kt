@@ -17,7 +17,10 @@ object ErrorMapper {
     fun daily() = AssistantError(Kind.DAILY_LIMIT, "Günlük istek sınırına ulaşıldı. Yarın tekrar dene ya da ayarlardan sınırı değiştir.")
     fun refused() = AssistantError(Kind.REFUSED, "Model bu isteği güvenlik nedeniyle yanıtlamadı. İsteği değiştirip tekrar dene.")
     fun truncated() = AssistantError(Kind.TRUNCATED, "Yanıt uzunluk sınırında kesildi. Daha kısa bir istek dene.")
-    fun toolSchema() = AssistantError(Kind.TOOL_SCHEMA, "Araç tanımı bu model tarafından kabul edilmedi. Ayarlardan araç desteğini kapatıp dene.")
+    fun toolSchema(hintToggle: Boolean = false) = AssistantError(
+        Kind.TOOL_SCHEMA,
+        "Araç tanımı bu model tarafından kabul edilmedi." + if (hintToggle) " Ayarlardan araç desteğini kapatıp dene." else "",
+    )
     fun invalid() = AssistantError(Kind.INVALID_RESPONSE, "Sağlayıcıdan beklenmeyen bir yanıt geldi.")
     fun loopLimit() = AssistantError(Kind.LOOP_LIMIT, "Asistan çok fazla adım denedi ve durduruldu. İsteği daha açık yazıp tekrar dene.")
     fun imageUnsupported() = AssistantError(Kind.IMAGE_UNSUPPORTED, "Seçili model görsel desteklemiyor. Ayarlardan görsel desteğini aç ya da görselsiz yaz.")
@@ -28,7 +31,7 @@ object ErrorMapper {
      * @param retryAfter Retry-After basligi (saniye); yoksa null
      * @param body govde (yalniz siniflandirma icin)
      */
-    fun fromHttp(status: Int, retryAfter: String? = null, body: String? = null): AssistantError {
+    fun fromHttp(status: Int, retryAfter: String? = null, body: String? = null, provider: ProviderId? = null): AssistantError {
         val b = body?.lowercase().orEmpty()
         val wait = retryAfter?.trim()?.toDoubleOrNull()?.takeIf { it >= 0 && it.isFinite() }?.let { Math.ceil(it).toInt() }
         return when {
@@ -51,8 +54,9 @@ object ErrorMapper {
             status == 400 || status == 422 -> when {
                 "prompt is too long" in b || "context" in b && ("length" in b || "window" in b) ->
                     AssistantError(Kind.CONTEXT_TOO_LONG, "Sohbet çok uzadı. Sohbeti temizleyip tekrar dene.")
-                "tool" in b || "function" in b || "schema" in b ->
-                    toolSchema()
+                // "Araç desteğini kapat" önerisi yalnız araç bayrağı olan OpenAI-uyumlu sağlayıcıda anlamlı.
+                provider == ProviderId.OPENAI_COMPAT && ("tool" in b || "function" in b || "schema" in b) ->
+                    toolSchema(hintToggle = true)
                 else -> AssistantError(Kind.BAD_REQUEST, "İstek sağlayıcı tarafından reddedildi. Model adını ve ayarları kontrol et.")
             }
             else -> AssistantError(Kind.UNKNOWN, "Beklenmeyen bir hata oluştu (kod $status).")

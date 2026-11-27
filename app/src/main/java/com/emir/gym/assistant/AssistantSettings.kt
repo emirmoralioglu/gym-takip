@@ -25,6 +25,12 @@ object ConfigRules {
     private val MODEL = Regex("^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,99}$")
     const val MAX_DAILY_LIMIT = 1_000_000
 
+    /** floor(%99) >= 1 olan en kucuk sinir: 1 girilirse hicbir istek atilamaz. */
+    fun minimumUsableLimit(): Int = 2
+
+    /** Efektif istek ust siniri (floor(limit x 0.99)); null = sinirsiz. */
+    fun effectiveCap(limit: Int?): Int? = QuotaLogic.cap(limit)
+
     /** Gemini'de 'models/' oneki atilir; '/' icermeyen ad beklenir. */
     fun cleanModel(provider: ProviderId, raw: String): String? {
         var t = raw.trim()
@@ -34,7 +40,7 @@ object ConfigRules {
         return t
     }
 
-    fun validLimit(n: Int?) = n == null || n in 1..MAX_DAILY_LIMIT
+    fun validLimit(n: Int?) = n == null || n in minimumUsableLimit()..MAX_DAILY_LIMIT
 }
 
 /**
@@ -102,7 +108,7 @@ class AssistantSettings(context: Context, private val allowLocalCleartext: Boole
     fun setSupportsTools(v: Boolean) = commit { putBoolean("openai_tools", v) }
     fun setAutoAdd(v: Boolean) = commit { putBoolean("auto_add", v) }
 
-    /** null = sinirsiz. 1..MAX disi gecersiz (false). */
+    /** null = sinirsiz. En az [ConfigRules.minimumUsableLimit] (2), en cok MAX; disi gecersiz (false). */
     fun setDailyLimit(p: ProviderId, limit: Int?): Boolean {
         if (!ConfigRules.validLimit(limit)) return false
         commit { if (limit == null) remove("limit_${p.name}") else putInt("limit_${p.name}", limit) }

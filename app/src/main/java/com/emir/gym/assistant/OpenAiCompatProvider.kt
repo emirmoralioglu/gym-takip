@@ -125,7 +125,7 @@ class OpenAiCompatProvider(
                 OpenAiWire.buildBody(req.copy(tools = if (supportsTools) req.tools else emptyList()), supportsImages), connectMs, readMs,
             )
             if (r.status in 200..299) OpenAiWire.parseResponse(r.body)
-            else LlmResult(Status.ERROR, error = ErrorMapper.fromHttp(r.status, r.retryAfter, r.body))
+            else LlmResult(Status.ERROR, error = ErrorMapper.fromHttp(r.status, r.retryAfter, r.body, ProviderId.OPENAI_COMPAT))
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {

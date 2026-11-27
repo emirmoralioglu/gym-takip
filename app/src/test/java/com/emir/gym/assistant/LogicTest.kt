@@ -182,7 +182,7 @@ class ErrorMapperTest {
         assertEquals(AssistantError.Kind.SERVER, ErrorMapper.fromHttp(529).kind)
         assertEquals(AssistantError.Kind.TOO_LARGE, ErrorMapper.fromHttp(413).kind)
         assertEquals(AssistantError.Kind.BAD_REQUEST, ErrorMapper.fromHttp(400, null, "bad").kind)
-        assertEquals(AssistantError.Kind.TOOL_SCHEMA, ErrorMapper.fromHttp(400, null, """{"error":"Invalid function_declarations schema"}""").kind)
+        assertEquals(AssistantError.Kind.TOOL_SCHEMA, ErrorMapper.fromHttp(400, null, """{"error":"Invalid function_declarations schema"}""", ProviderId.OPENAI_COMPAT).kind)
     }
 
     @Test fun retryAfterIsUsed() {
@@ -234,7 +234,7 @@ class UrlAndConfigTest {
         assertNull(ConfigRules.cleanModel(ProviderId.OPENAI_COMPAT, "bad name"))
         assertNull(ConfigRules.cleanModel(ProviderId.ANTHROPIC, ""))
         assertTrue(ConfigRules.validLimit(null))
-        assertTrue(ConfigRules.validLimit(1))
+        assertFalse(ConfigRules.validLimit(1)) // floor(%99)=0: hicbir istek atilamaz
         assertFalse(ConfigRules.validLimit(0))
         assertFalse(ConfigRules.validLimit(-1))
     }

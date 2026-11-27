@@ -30,6 +30,8 @@ class AssistantEngine(
     private val today: () -> LocalDate = { LocalDate.now() },
     private val now: () -> Long = System::currentTimeMillis,
     private val allowLocalCleartext: Boolean = false,
+    /** Mesaj hic kaydedilmeden reddedilirse hazirlanan gorsellerin silinmesi icin (sahipsiz dosya kalmaz). */
+    private val discardImages: (List<Block.Image>) -> Unit = {},
 ) {
     companion object {
         const val MAX_ROUNDS = 6
@@ -41,7 +43,8 @@ class AssistantEngine(
     val isBusy: Boolean get() = lock.isLocked
 
     suspend fun send(text: String, images: List<Block.Image> = emptyList()): TurnOutcome {
-        if (!lock.tryLock()) return TurnOutcome(error = ErrorMapper.busy())
+        if (!lock.tryLock()) { discardSafely(images); return TurnOutcome(error = ErrorMapper.busy()) }
+        stored = false
         try {
             return run(text.trim(), images)
         } catch (e: kotlinx.coroutines.CancellationException) {
@@ -49,8 +52,16 @@ class AssistantEngine(
         } catch (e: Exception) {
             return TurnOutcome(error = AssistantError(AssistantError.Kind.UNKNOWN, "Beklenmeyen bir hata oluştu."))
         } finally {
+            // Kullanici mesaji kaydedilmediyse gorsel dosyalari kimseye bagli degildir: silinir.
+            if (!stored) discardSafely(images)
             lock.unlock()
         }
+    }
+
+    @Volatile private var stored = false
+
+    private fun discardSafely(images: List<Block.Image>) {
+        if (images.isNotEmpty()) runCatching { discardImages(images) }
     }
 
     private suspend fun run(text: String, images: List<Block.Image>): TurnOutcome {
@@ -68,6 +79,9 @@ class AssistantEngine(
         val toolsOn = provider.capabilities.supportsTools
         val day = today()
 
+        // Ilk istegin sayaci mesaj kaydedilmeden alinir: sinirdaysa mesaj/gorsel hic birakilmaz.
+        if (!usage.tryAcquire(cfg.provider, day.toEpochDay(), cfg.dailyLimit)) return TurnOutcome(error = ErrorMapper.daily())
+
         val ctx = contextText(day, toolsOn)
         val tag = cfg.provider.name
         val blocks = ArrayList<Block>()
@@ -75,12 +89,13 @@ class AssistantEngine(
         if (text.isNotEmpty()) blocks += Block.Text(text)
         blocks += images
         chat.append(ChatMessage(Role.USER, blocks, provider = tag, model = cfg.model, createdAt = now()))
+        stored = true
 
         val actionIds = ArrayList<Long>()
         var requests = 0
         var lastText = ""
         for (round in 1..MAX_ROUNDS) {
-            if (!usage.tryAcquire(cfg.provider, day.toEpochDay(), cfg.dailyLimit)) {
+            if (round > 1 && !usage.tryAcquire(cfg.provider, day.toEpochDay(), cfg.dailyLimit)) {
                 return TurnOutcome(lastText, ErrorMapper.daily(), actionIds, requests)
             }
             requests++

@@ -99,8 +99,22 @@ object AnthropicWire {
             else -> Status.COMPLETED // end_turn, tool_use, stop_sequence, pause_turn
         }
         // Kesilmis (max_tokens) yanitta arac cagrisi eksik olabilir: calistirilmaz.
-        return LlmResult(status, text.toString(), if (status == Status.MAX_TOKENS) emptyList() else calls, u, rawAnthropic = rawContent)
+        // Kesilmis yanitta yarim tool_use ham icerikte de birakilmaz (sonucsuz tool_use sonraki istegi 400 yapar).
+        val raw = if (status == Status.MAX_TOKENS) stripToolUse(rawContent) else rawContent
+        return LlmResult(status, text.toString(), if (status == Status.MAX_TOKENS) emptyList() else calls, u, rawAnthropic = raw)
     }
+
+    /** Ham icerik dizisinden tool_use bloklarini atar; bos kalirsa null. */
+    fun stripToolUse(raw: String?): String? {
+        val arr = raw?.let { Js.parse(it) }?.takeIf { it.isArray } ?: return null
+        val out = Js.arr()
+        arr.forEach { if (Js.text(it, "type") != "tool_use") out.add(it) }
+        return if (out.size() == 0) null else Js.str(out)
+    }
+
+    /** Ham icerikteki tool_use kimlikleri. */
+    fun toolUseIds(raw: String?): Set<String> =
+        raw?.let { Js.parse(it) }?.takeIf { it.isArray }?.filter { Js.text(it, "type") == "tool_use" }?.mapNotNull { Js.text(it, "id") }?.toSet().orEmpty()
 }
 
 class AnthropicProvider(
@@ -131,7 +145,7 @@ class AnthropicProvider(
             AnthropicWire.parseResponse(mapper.writeValueAsString(message), raw)
         } catch (e: AnthropicServiceException) {
             val retry = e.headers().values("retry-after").firstOrNull()
-            LlmResult(Status.ERROR, error = ErrorMapper.fromHttp(e.statusCode(), retry, runCatching { e.body().toString() }.getOrNull()))
+            LlmResult(Status.ERROR, error = ErrorMapper.fromHttp(e.statusCode(), retry, runCatching { e.body().toString() }.getOrNull(), ProviderId.ANTHROPIC))
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {

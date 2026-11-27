@@ -19,7 +19,10 @@ object History {
         return windowed.mapIndexed { i, m ->
             val sameSource = m.provider == provider.name && m.model == model
             // Kirpma onceki on-eki degistirdigi icin eski turlarin ham (thinking'li) icerigi birakilir.
-            val keepRaw = m.rawAnthropic != null && sameSource && (!trimmed || i > lastUserText)
+            val blockIds = m.blocks.filterIsInstance<Block.ToolUse>().map { it.id }.toSet()
+            // Ham icerikteki tool_use'lar blok listesiyle (ve onarilan tool_result'larla) eslesmiyorsa ham icerik kullanilmaz.
+            val keepRaw = m.rawAnthropic != null && sameSource && (!trimmed || i > lastUserText) &&
+                AnthropicWire.toolUseIds(m.rawAnthropic) == blockIds
             if (m.rawAnthropic != null && !keepRaw) m.copy(rawAnthropic = null) else m
         }
     }

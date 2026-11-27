@@ -155,4 +155,14 @@ class ImagePreparer(context: Context) {
     } catch (e: Exception) { null }
 
     fun deleteAll() { dir.deleteRecursively() }
+
+    /** Tek gorseli ve onizlemesini siler (yalniz kendi dizinimizde). */
+    fun delete(path: String) {
+        runCatching {
+            val f = File(path)
+            if (!f.canonicalPath.startsWith(dir.canonicalPath + File.separator)) return
+            f.delete()
+            File(f.parentFile, f.nameWithoutExtension + "_thumb.jpg").delete()
+        }
+    }
 }
