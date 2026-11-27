@@ -76,7 +76,7 @@ class KeystoreStoreTest {
     }
 
     @Test fun maskHelper() {
-        assertEquals("sk-…abcd", ApiKeyStore.mask("sk-ant-api03-xxxxxxxxxxxxabcd"))
+        assertEquals("sk-…abcd", ApiKeyStore.mask("sk-test-xxxxxxxxxxxxxxabcd"))
         assertEquals("…", ApiKeyStore.mask("short"))
         assertEquals("…0123", ApiKeyStore.mask("1234567890123"))
     }
