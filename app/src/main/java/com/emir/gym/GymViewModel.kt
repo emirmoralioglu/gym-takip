@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -57,6 +58,13 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     val waterLogs: StateFlow<List<WaterLog>> = trackingDao.observeWater().hot(emptyList())
     val bodyWeights: StateFlow<List<BodyWeight>> = trackingDao.observeBodyWeights().hot(emptyList())
     val goals: StateFlow<NutritionGoals> = settingsStore.goals
+
+    /** Ogun ve su akislari ilk verisini verdi mi (bos liste ile "henuz yuklenmedi" ayrimi). */
+    val nutritionReady: StateFlow<Boolean> =
+        kotlinx.coroutines.flow.combine(
+            trackingDao.observeMeals().map { true },
+            trackingDao.observeWater().map { true },
+        ) { a, b -> a && b }.hot(false)
 
     /** Kullaniciya gosterilecek mesaj (hata ya da bilgi). */
     val error = MutableStateFlow<String?>(null)
@@ -273,6 +281,16 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     fun saveActivity(log: ActivityLog) = run("Aktivite kaydedilemedi") { trackingDao.upsertActivity(log) }
     fun deleteActivity(log: ActivityLog) = run("Aktivite silinemedi") { trackingDao.deleteActivity(log) }
     fun saveMeal(meal: Meal) = run("Öğün kaydedilemedi") { trackingDao.upsertMeal(meal) }
+    /** Ogunu yazar; yalnizca yazma basarili olursa [onSaved] cagrilir (hatada mesaj verilir). */
+    fun saveMealThen(meal: Meal, onSaved: () -> Unit) {
+        viewModelScope.launch {
+            val ok = try { trackingDao.upsertMeal(meal); true } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
+                error.value = "Öğün kaydedilemedi: ${e.message ?: "bilinmeyen hata"}"; false
+            }
+            if (ok) onSaved()
+        }
+    }
+
     fun deleteMeal(meal: Meal) = run("Öğün silinemedi") { trackingDao.deleteMeal(meal) }
     fun saveWater(log: WaterLog) = run("Su kaydedilemedi") { trackingDao.upsertWater(log) }
     fun deleteWater(log: WaterLog) = run("Su silinemedi") { trackingDao.deleteWater(log) }

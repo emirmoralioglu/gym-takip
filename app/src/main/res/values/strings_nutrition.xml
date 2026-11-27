@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_nutrition">Beslenme</string>
+    <string name="nutr_title">Beslenme</string>
+
+    <!-- Gün seçici -->
+    <string name="nutr_prev_day">Önceki gün</string>
+    <string name="nutr_next_day">Sonraki gün</string>
+    <string name="nutr_pick_date">Tarih seç</string>
+    <string name="nutr_today">Bugün</string>
+    <string name="nutr_yesterday">Dün</string>
+
+    <!-- Özet -->
+    <string name="nutr_summary">Günün özeti</string>
+    <string name="nutr_protein">Protein</string>
+    <string name="nutr_calories">Kalori</string>
+    <string name="nutr_water">Su</string>
+    <string name="nutr_protein_range">Hedef aralık: %1$s–%2$s g · %3$s kg</string>
+    <string name="nutr_protein_tip">Öğün başına 25–40 g protein iyi bir hedef.</string>
+    <string name="nutr_no_weight_title">Protein hedefi için kilo gerekli</string>
+    <string name="nutr_no_weight_text">Kilo eklenmeden protein hedefi gösterilmez.</string>
+    <string name="nutr_add_weight">Ayarlar\'dan kilo ekle</string>
+    <string name="nutr_taken_protein">Alınan protein: %s g</string>
+    <string name="nutr_cal_taken">Alınan: %s kcal</string>
+    <string name="nutr_cal_taken_none">Alınan: —</string>
+    <string name="nutr_cal_none_goal">— / %s kcal</string>
+    <string name="nutr_cal_none_hint">Kalori girilmiş öğün yok</string>
+    <string name="nutr_cal_missing_note">Kalori girilmeyen öğünler sayılmaz</string>
+    <string name="nutr_total_value_nocal">%s g protein · —</string>
+    <string name="nutr_cal_no_goal">Kalori hedefi belirlenmemiş. Ayarlar\'dan ekleyebilirsin.</string>
+    <string name="nutr_open_settings">Ayarlar\'a git</string>
+    <string name="nutr_remaining">%1$s %2$s kaldı</string>
+    <string name="nutr_reached">Hedefe ulaştın</string>
+    <string name="nutr_in_range">Hedef aralığındasın</string>
+    <string name="nutr_over">Hedefi %1$s %2$s aştın</string>
+    <string name="nutr_over_protein">Üst sınırı %s g aştın</string>
+    <string name="nutr_water_bonus">Yüzme/sauna günü: hedef +%s ml artırıldı</string>
+    <string name="nutr_unit_g">g</string>
+    <string name="nutr_unit_kcal">kcal</string>
+    <string name="nutr_unit_ml">ml</string>
+
+    <!-- Öğünler -->
+    <string name="nutr_meals">Öğünler</string>
+    <string name="nutr_add_meal">Öğün ekle</string>
+    <string name="nutr_meals_empty_title">Bu gün için öğün yok</string>
+    <string name="nutr_meals_empty_message">Öğün ekleyerek protein ve kalorini takip et.</string>
+    <string name="nutr_day_total">Günün toplamı</string>
+    <string name="nutr_total_value">%1$s g protein · %2$s kcal</string>
+    <string name="nutr_group_value">%s g</string>
+    <string name="nutr_meal_detail">%1$s kcal</string>
+    <string name="nutr_carbs_short">K %s g</string>
+    <string name="nutr_fat_short">Y %s g</string>
+    <string name="nutr_delete">Sil</string>
+    <string name="nutr_delete_desc">%s öğününü sil</string>
+    <string name="nutr_meal_delete_title">Öğün silinsin mi?</string>
+    <string name="nutr_meal_delete_text">“%s” silinecek.</string>
+
+    <!-- Öğün formu -->
+    <string name="nutr_form_new">Yeni öğün</string>
+    <string name="nutr_form_edit">Öğünü düzenle</string>
+    <string name="nutr_f_desc">Açıklama</string>
+    <string name="nutr_f_protein">Protein</string>
+    <string name="nutr_f_kcal">Kalori (isteğe bağlı)</string>
+    <string name="nutr_f_carbs">Karbonhidrat (isteğe bağlı)</string>
+    <string name="nutr_f_fat">Yağ (isteğe bağlı)</string>
+    <string name="nutr_save">Kaydet</string>
+    <string name="nutr_err_desc_empty">Açıklama boş olamaz</string>
+    <string name="nutr_err_desc_long">Açıklama en fazla %d karakter olabilir</string>
+    <string name="nutr_err_protein_empty">Protein gir (yoksa 0 yaz)</string>
+    <string name="nutr_err_number">0 ile %s arasında bir sayı gir</string>
+    <string name="nutr_err_int">0 ile %s arasında bir tam sayı gir</string>
+
+    <!-- Son öğünler -->
+    <string name="nutr_recent">Son öğünler</string>
+    <string name="nutr_recent_hint">Dokununca bugüne eklenir</string>
+    <string name="nutr_recent_added">“%s” bugüne eklendi</string>
+    <string name="nutr_recent_chip">%1$s · %2$s g</string>
+
+    <!-- Su -->
+    <string name="nutr_water_section">Su</string>
+    <string name="nutr_water_chip">+%s ml</string>
+    <string name="nutr_water_custom">Özel</string>
+    <string name="nutr_water_add_title">Su ekle</string>
+    <string name="nutr_water_amount">Miktar</string>
+    <string name="nutr_water_err">1 ile %d ml arasında bir tam sayı gir</string>
+    <string name="nutr_water_none">Bu gün su kaydı yok</string>
+    <string name="nutr_water_value">%s ml</string>
+    <string name="nutr_water_delete_title">Su kaydı silinsin mi?</string>
+    <string name="nutr_water_delete_text">%s ml silinecek.</string>
+
+    <!-- Haftalık protein -->
+    <string name="nutr_week_section">Haftalık protein</string>
+    <string name="nutr_week_title">Son 7 gün protein</string>
+    <string name="nutr_week_avg">Ortalama: %s g/gün</string>
+    <string name="nutr_week_target">Çizgi: hedef alt sınırı (%s g)</string>
+    <string name="nutr_week_avg_note">Ortalama yalnızca öğün girilen günlerden hesaplanır.</string>
+    <string name="nutr_week_empty_title">Son 7 günde protein kaydı yok</string>
+    <string name="nutr_week_empty_message">Öğün ekledikçe haftalık özet burada görünür.</string>
+    <string name="nutr_week_chart_desc">Son 7 gün protein grafiği, günlük ortalama %s gram</string>
+</resources>
