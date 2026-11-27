@@ -3,7 +3,8 @@
   cloud-backup: gym.db (sohbet, oneriler, antrenman/beslenme), filesDir/chat gorselleri ve sifreli anahtarlar disarida.
   device-transfer (kullanicinin kendi yeni telefonu): <include> verilmedigi icin varsayilan olarak HER SEY aktarilir:
   gym.db (+wal/shm/journal), filesDir/chat gorselleri ve ayarlar. Yalniz Keystore'a bagli sifreli anahtarlar
-  (assistant_keys) ve yerel sayac (assistant_usage) disarida: yeni cihazda anahtar yoktur, kullanici yeniden girer.
+  (assistant_keys) disarida: yeni cihazda anahtar yoktur, kullanici yeniden girer. Istek sayaci (assistant_usage) AKTARILIR:
+  ayni anahtar yeni telefonda kullanilirsa sayac sifirdan baslamaz (elapsed degerleri yeni cihazda gecersiz sayilir, duvar yasi kullanilir).
   (allowBackup=false oldugundan bulut yedegi zaten kapali; kural yine de acik yazildi.)
 -->
 <data-extraction-rules>
@@ -18,6 +19,5 @@
     </cloud-backup>
     <device-transfer>
         <exclude domain="sharedpref" path="assistant_keys.xml" />
-        <exclude domain="sharedpref" path="assistant_usage.xml" />
     </device-transfer>
 </data-extraction-rules>

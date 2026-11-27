@@ -23,7 +23,8 @@ data class AssistantConfig(
 /** Saf dogrulamalar (testli). */
 object ConfigRules {
     private val MODEL = Regex("^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,99}$")
-    const val MAX_DAILY_LIMIT = 10_000
+    /** Saklanabilir ust sinir: en cok ~5000 damga (yaklasik 140 KB) kalici yazilir. */
+    const val MAX_DAILY_LIMIT = 5_000
 
     /** floor(%99) >= 1 olan en kucuk sinir: 1 girilirse hicbir istek atilamaz. */
     fun minimumUsableLimit(): Int = 2

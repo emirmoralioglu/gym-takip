@@ -50,6 +50,8 @@ object Http {
             conn.setRequestProperty("Accept", "application/json")
             headers.forEach { (k, v) -> conn.setRequestProperty(k, v) }
             val bytes = body.toByteArray(Charsets.UTF_8)
+            // Sabit uzunluklu akis: HttpURLConnection bu modda POST yonlendirmesini (ve govdeyi yeniden gondermeyi) izleyemez;
+            // instanceFollowRedirects=false ile birlikte anahtar basligi hicbir sekilde ikinci hosta gitmez.
             conn.setFixedLengthStreamingMode(bytes.size)
             conn.outputStream.use { it.write(bytes) }
             val status = conn.responseCode

@@ -133,6 +133,8 @@ class AnthropicProvider(
             .timeout(Timeout.builder().connect(connectTimeout).read(readTimeout).write(Duration.ofSeconds(60)).request(Duration.ofSeconds(150)).build())
             // Her HTTP istegi gunluk sayaca yazilir; SDK sessizce yeniden denemesin.
             .maxRetries(0)
+            // Not: SDK'nin OkHttp istemcisi retryOnConnectionFailure(false) ile kurulur (dogrulandi: bytecode iconst_0);
+            // yapilandirma yuzeyinde bu ayar yok, gerek de yok.
             .build()
     }
 

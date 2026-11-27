@@ -25,28 +25,38 @@ object QuotaLogic {
     /** Efektif ust sinir: floor(limit*0.99); limit null = sinirsiz. */
     fun cap(limit: Int?): Int? = limit?.let { (it.toLong() * 99L / 100L).toInt() }
 
-    /** Saat geri alinmissa 'simdi' en son kayitli damgadan kucuk olamaz. */
-    fun effectiveNow(stamps: List<Stamp>, nowWall: Long): Long = maxOf(nowWall, stamps.maxOfOrNull { it.wall } ?: nowWall)
-
-    private fun age(s: Stamp, effNow: Long, nowElapsed: Long): Long {
-        val w = maxOf(0L, effNow - s.wall)
+    /**
+     * Yas = duvar ve elapsed yaslarinin kucugu. Gelecege ait duvar damgasi (saat kazara ileri kurulup geri alinmis)
+     * 'simdi' sayilir (yas 0): kilitlenme en cok 24 saat surer, ve yas kucuk hesaplandigi icin guvenli yon bozulmaz.
+     */
+    private fun age(s: Stamp, nowWall: Long, nowElapsed: Long): Long {
+        val w = maxOf(0L, nowWall - s.wall)
         val e = nowElapsed - s.elapsed
         return if (e >= 0) minOf(w, e) else w // e<0: cihaz yeniden acilmis, elapsed gecersiz
     }
 
     /** Pencerede (son 24 saat) kalan kayitlar; eskileri budanir. */
-    fun live(stamps: List<Stamp>, nowWall: Long, nowElapsed: Long): List<Stamp> {
-        val eff = effectiveNow(stamps, nowWall)
-        return stamps.filter { age(it, eff, nowElapsed) < WINDOW_MS }
-    }
+    fun live(stamps: List<Stamp>, nowWall: Long, nowElapsed: Long): List<Stamp> =
+        stamps.filter { age(it, nowWall, nowElapsed) < WINDOW_MS }.map { s ->
+            val w = maxOf(0L, nowWall - s.wall)
+            when {
+                // Gelecek damgasi: 'simdi' say (yas 0), elapsed'i da simdiye hizala.
+                s.wall > nowWall -> Stamp(nowWall, nowElapsed)
+                // Yeniden acilis (elapsed gecersiz): elapsed'i duvar yasina gore yeniden kur; yoksa eski elapsed sonradan
+                // 'pozitif' gorunup yasi yapay olarak kucultur ve kilidi 24 saatten uzatir.
+                nowElapsed - s.elapsed < 0 -> Stamp(s.wall, nowElapsed - w)
+                else -> s
+            }
+        }
 
     /** Istek atilabilir mi; atilabilirse yeni kayit eklenmis liste doner. */
     fun tryAcquire(stamps: List<Stamp>, nowWall: Long, nowElapsed: Long, limit: Int?): Pair<Boolean, List<Stamp>> {
         val live = live(stamps, nowWall, nowElapsed)
         val cap = cap(limit)
         if (cap != null && live.size >= cap) return false to live
-        val eff = effectiveNow(live, nowWall)
-        return true to (live + Stamp(eff, nowElapsed)).takeLast(MAX_KEPT)
+        val next = live + Stamp(nowWall, nowElapsed)
+        // Sinirliyken KIRPMA YOK (24 saatten eski budama yeterli; en cok cap kayit). Yalniz sinirsizken gosterge icin MAX_KEPT.
+        return true to (if (cap == null) next.takeLast(MAX_KEPT) else next)
     }
 
     /** Pencerede kalan istek hakki; sinirsizsa null. */
@@ -55,8 +65,7 @@ object QuotaLogic {
 
     /** Bir kaydin pencereden dusecegi duvar saati zamani (epoch ms), 'simdi'ye gore. */
     private fun expiries(stamps: List<Stamp>, nowWall: Long, nowElapsed: Long): List<Long> {
-        val eff = effectiveNow(stamps, nowWall)
-        return live(stamps, nowWall, nowElapsed).map { eff + (WINDOW_MS - age(it, eff, nowElapsed)) }.sorted()
+        return live(stamps, nowWall, nowElapsed).map { nowWall + (WINDOW_MS - age(it, nowWall, nowElapsed)) }.sorted()
     }
 
     /** En eski istegin dusecegi zaman (epoch ms); kayit yoksa null. */
@@ -73,10 +82,18 @@ object QuotaLogic {
 
     fun encode(stamps: List<Stamp>): String = stamps.joinToString(",") { "${it.wall}:${it.elapsed}" }
 
-    fun decode(s: String?): List<Stamp> = s.orEmpty().split(',').mapNotNull {
-        val p = it.split(':')
-        val w = p.getOrNull(0)?.toLongOrNull(); val e = p.getOrNull(1)?.toLongOrNull()
-        if (p.size == 2 && w != null && e != null) Stamp(w, e) else null
+    fun decode(s: String?): List<Stamp> = decodeChecked(s).first
+
+    /** (kayitlar, bozuk mu). Bos/yok = bozuk degil; cozulemeyen herhangi bir parca = bozuk. */
+    fun decodeChecked(s: String?): Pair<List<Stamp>, Boolean> {
+        if (s.isNullOrEmpty()) return emptyList<Stamp>() to false
+        var bad = false
+        val list = s.split(',').mapNotNull {
+            val p = it.split(':')
+            val w = p.getOrNull(0)?.toLongOrNull(); val e = p.getOrNull(1)?.toLongOrNull()
+            if (p.size == 2 && w != null && e != null) Stamp(w, e) else { bad = true; null }
+        }
+        return list to bad
     }
 }
 
@@ -122,20 +139,37 @@ class MemoryStampStorage : StampStorage {
 }
 
 class StoredUsageStore(private val storage: StampStorage, private val clock: QuotaClock = QuotaClock.system()) : UsageStore {
-    private fun stamps(p: ProviderId) = QuotaLogic.decode(storage.read(p))
+    /**
+     * Kayitlari okur. Bozuk kayit (cozulemeyen parca): sayac SIFIRLANMAZ; guvenli yon olarak sinirli saglayicida
+     * 'simdi' damgali cap kadar istek yapilmis sayilir (24 saat sonra kendiliginden acilir) ve duzeltilmis kayit yazilir.
+     * Gelecek damgalari kalici olarak 'simdi'ye sikistirilip yazilir.
+     */
+    private fun stamps(p: ProviderId, limit: Int?, persist: Boolean): List<Stamp> {
+        val (list, corrupt) = QuotaLogic.decodeChecked(storage.read(p))
+        val w = clock.wall(); val e = clock.elapsed()
+        if (corrupt) {
+            val synthetic = QuotaLogic.cap(limit)?.let { c -> List(c) { Stamp(w, e) } } ?: emptyList()
+            if (persist) storage.write(p, QuotaLogic.encode(synthetic))
+            return synthetic
+        }
+        val normalized = QuotaLogic.live(list, w, e)
+        // Gelecek damgasi / yeniden acilis duzeltmesi kalici yazilir (budama tek basina yazdirmaz).
+        if (persist && normalized.size == list.size && normalized != list) storage.write(p, QuotaLogic.encode(normalized))
+        return normalized
+    }
 
     @Synchronized
     override fun tryAcquire(provider: ProviderId, limit: Int?): Boolean {
-        val (ok, next) = QuotaLogic.tryAcquire(stamps(provider), clock.wall(), clock.elapsed(), limit)
+        val (ok, next) = QuotaLogic.tryAcquire(stamps(provider, limit, true), clock.wall(), clock.elapsed(), limit)
         if (!ok) return false
         // Sayac diske yazilamazsa istek ATILMAZ (az sayma ucretsiz sinirin asilmasina yol acar).
         return storage.write(provider, QuotaLogic.encode(next))
     }
 
-    @Synchronized override fun count(provider: ProviderId): Int = QuotaLogic.live(stamps(provider), clock.wall(), clock.elapsed()).size
-    @Synchronized override fun remaining(provider: ProviderId, limit: Int?): Int? = QuotaLogic.remaining(stamps(provider), clock.wall(), clock.elapsed(), limit)
-    @Synchronized override fun reopensAt(provider: ProviderId, limit: Int?): Long? = QuotaLogic.reopensAt(stamps(provider), clock.wall(), clock.elapsed(), limit)
-    @Synchronized override fun oldestExpiry(provider: ProviderId): Long? = QuotaLogic.oldestExpiry(stamps(provider), clock.wall(), clock.elapsed())
+    @Synchronized override fun count(provider: ProviderId): Int = QuotaLogic.live(stamps(provider, null, false), clock.wall(), clock.elapsed()).size
+    @Synchronized override fun remaining(provider: ProviderId, limit: Int?): Int? = QuotaLogic.remaining(stamps(provider, limit, false), clock.wall(), clock.elapsed(), limit)
+    @Synchronized override fun reopensAt(provider: ProviderId, limit: Int?): Long? = QuotaLogic.reopensAt(stamps(provider, limit, false), clock.wall(), clock.elapsed(), limit)
+    @Synchronized override fun oldestExpiry(provider: ProviderId): Long? = QuotaLogic.oldestExpiry(stamps(provider, null, false), clock.wall(), clock.elapsed())
 }
 
 fun PrefsUsageStore(context: Context): UsageStore = StoredUsageStore(PrefsStampStorage(context), QuotaClock.system())

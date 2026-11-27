@@ -133,5 +133,87 @@ class QuotaLogicTest {
     @Test fun corruptStorageDecodesSafely() {
         assertEquals(emptyList<Stamp>(), QuotaLogic.decode("bozuk,1:x,:"))
         assertEquals(listOf(Stamp(1, 2)), QuotaLogic.decode("1:2,xx"))
+        assertTrue(QuotaLogic.decodeChecked("1:2,xx").second)
+        assertFalse(QuotaLogic.decodeChecked("1:2,3:4").second)
+        assertFalse(QuotaLogic.decodeChecked(null).second)
+        assertFalse(QuotaLogic.decodeChecked("").second)
+    }
+
+    @Test fun corruptRecordDoesNotResetCounter() {
+        val st = MemoryStampStorage(); val c = Clock(T0); val u = StoredUsageStore(st, c.qc())
+        st.write(ProviderId.GEMINI, "bozuk,1:x")
+        assertFalse("bozuk kayit = cap kadar dolu sayilir", u.tryAcquire(ProviderId.GEMINI, 3)) // cap 2
+        assertEquals(2, QuotaLogic.decode(st.read(ProviderId.GEMINI)).size) // duzeltilmis kayit yazildi
+        assertEquals(0, u.remaining(ProviderId.GEMINI, 3))
+        c.advance(24 * H - 1)
+        assertFalse(u.tryAcquire(ProviderId.GEMINI, 3))
+        c.advance(1)
+        assertTrue("24 saat sonra kendiliginden acilir (kalici kilit yok)", u.tryAcquire(ProviderId.GEMINI, 3))
+        // sinirsizda bozuk kayit engel olmaz
+        st.write(ProviderId.ANTHROPIC, "###")
+        assertTrue(u.tryAcquire(ProviderId.ANTHROPIC, null))
+    }
+
+    @Test fun windowCapHoldsForLargeLimits() {
+        // Regresyon: sinirliyken kirpma yok; limit 2020 ustunde de tam floor(%99) istek gecer.
+        for (limit in listOf(10_000, 3_000, 2_021, 2_020, 2_000, 100)) {
+            var stamps = emptyList<Stamp>(); var ok = 0
+            repeat(QuotaLogic.cap(limit)!! + 100) {
+                val (a, n) = QuotaLogic.tryAcquire(stamps, T0, 1_000, limit)
+                stamps = n; if (a) ok++
+            }
+            assertEquals("limit $limit", limit * 99 / 100, ok)
+            assertEquals(ok, QuotaLogic.live(stamps, T0, 1_000).size)
+        }
+    }
+
+    @Test fun limitAboveKeptStillEnforcedViaStore() {
+        val c = Clock(T0); val u = StoredUsageStore(MemoryStampStorage(), c.qc())
+        var ok = 0
+        repeat(2_200) { if (u.tryAcquire(ProviderId.GEMINI, 2_100)) ok++ } // cap 2079 > MAX_KEPT
+        assertEquals(2_079, ok)
+    }
+
+    @Test fun rewindPlusRebootStaysConservative() {
+        val c = Clock(T0, elapsed = 50 * H); val u = StoredUsageStore(MemoryStampStorage(), c.qc())
+        repeat(2) { assertTrue(u.tryAcquire(ProviderId.GEMINI, 3)) }
+        c.wall -= 5 * H; c.elapsed = 1_000 // saat geri alindi + yeniden acilis (elapsed gecersiz)
+        assertFalse("duvar yasi 0'a kirpilir, kayit hala taze", u.tryAcquire(ProviderId.GEMINI, 3))
+    }
+
+    @Test fun staleElapsedAfterRebootDoesNotExtendTheLock() {
+        val c = Clock(T0, elapsed = 5 * H); val u = StoredUsageStore(MemoryStampStorage(), c.qc())
+        repeat(2) { assertTrue(u.tryAcquire(ProviderId.GEMINI, 3)) }
+        c.wall = T0 + 10 * H; c.elapsed = 1_000 // yeniden acilis
+        assertFalse(u.tryAcquire(ProviderId.GEMINI, 3))
+        c.advance(14 * H) // duvar yasi 24 saat; yeni elapsed eski elapsed degerini asti
+        assertTrue("eski acilisin elapsed'i yasi yapay kucultmemeli", u.tryAcquire(ProviderId.GEMINI, 3))
+    }
+
+    @Test fun futureStampsAreClampedAndLockLastsAtMost24h() {
+        val st = MemoryStampStorage(); val c = Clock(T0); val u = StoredUsageStore(st, c.qc())
+        c.wall = T0 + 100 * H // saat kazara ileri kuruldu
+        repeat(2) { assertTrue(u.tryAcquire(ProviderId.GEMINI, 3)) }
+        c.wall = T0; c.elapsed = 1_000 // saat duzeltildi + yeniden acilis
+        assertFalse(u.tryAcquire(ProviderId.GEMINI, 3)) // guvenli: hala kilitli
+        assertTrue("gelecek damgalar simdiye sikistirilip yazildi", QuotaLogic.decode(st.read(ProviderId.GEMINI)).all { it.wall <= T0 })
+        c.advance(24 * H - 1)
+        assertFalse(u.tryAcquire(ProviderId.GEMINI, 3))
+        c.advance(1)
+        assertTrue("kilit en cok 24 saat", u.tryAcquire(ProviderId.GEMINI, 3))
+    }
+
+    @Test fun usageRulesInBackupXml() {
+        val dir = java.io.File("src/main/res/xml")
+        val x = java.io.File(dir, "data_extraction_rules.xml").readText()
+        fun block(tag: String) = Regex("<$tag>(.*?)</$tag>", RegexOption.DOT_MATCHES_ALL).find(x)!!.groupValues[1]
+        val cloud = block("cloud-backup"); val dev = block("device-transfer")
+        assertTrue(cloud.contains("assistant_keys.xml") && cloud.contains("assistant_usage.xml"))
+        assertTrue(cloud.contains("gym.db") && cloud.contains("chat/"))
+        assertTrue(dev.contains("assistant_keys.xml"))
+        assertFalse("sayac yeni telefona aktarilir", dev.contains("assistant_usage.xml"))
+        assertFalse(dev.contains("gym.db")); assertFalse(dev.contains("chat/"))
+        val legacy = java.io.File(dir, "backup_rules.xml").readText()
+        assertTrue(legacy.contains("assistant_keys.xml") && legacy.contains("assistant_usage.xml") && legacy.contains("gym.db"))
     }
 }
