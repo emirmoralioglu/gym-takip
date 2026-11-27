@@ -65,6 +65,25 @@ class RoomActionStore(private val db: AppDatabase) : ActionStore {
     override suspend fun reject(id: Long): Boolean = dao.reject(id) == 1
 }
 
+/** Saf (test edilebilir) duzenlenmis onay yolu; bkz. [AssistantRepository.confirmEdited]. */
+suspend fun confirmEditedWith(actions: ActionStore, writer: RecordWriter, actionId: Long, edited: ActionPayload): ConfirmResult {
+    val clean = ActionEdit.normalize(edited)
+    ActionEdit.check(clean)?.let { return ConfirmResult.Failed(it) }
+    return try {
+        when (val r = actions.confirm(actionId) { orig ->
+            require(orig.type == clean.type) { "tur degisemez" }
+            ActionRef.withEdit(writer.write(clean), clean)
+        }) {
+            is ConfirmResult.Confirmed -> r.copy(summary = ToolValidator.describe(clean))
+            else -> r
+        }
+    } catch (e: kotlinx.coroutines.CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        ConfirmResult.Failed("Kaydedilemedi.")
+    }
+}
+
 /** Asistanin veritabani katmani: sohbet, oneriler, okuma verisi. */
 class AssistantRepository(private val db: AppDatabase, private val goals: () -> NutritionGoals) {
     val chat: ChatStore = RoomChatStore(db.chatDao())
@@ -97,6 +116,12 @@ class AssistantRepository(private val db: AppDatabase, private val goals: () -> 
     } catch (e: Exception) {
         ConfirmResult.Failed("Kaydedilemedi.")
     }
+
+    /**
+     * Duzenlenmis haliyle onay: ayni atomik yoldan, ama yazilan kayit [edited]'dir. Tur ayni olmali ve sinirlar
+     * gecmeli; aksi halde hicbir sey yazilmaz (Failed). Duzenlenmis veri resultRef'te saklanir ([ActionRef]).
+     */
+    suspend fun confirmEdited(actionId: Long, edited: ActionPayload): ConfirmResult = confirmEditedWith(actions, writer, actionId, edited)
 
     suspend fun reject(actionId: Long): Boolean = actions.reject(actionId)
 

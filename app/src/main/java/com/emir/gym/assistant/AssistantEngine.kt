@@ -42,11 +42,19 @@ class AssistantEngine(
     private val lock = Mutex()
     val isBusy: Boolean get() = lock.isLocked
 
-    suspend fun send(text: String, images: List<Block.Image> = emptyList()): TurnOutcome {
+    suspend fun send(text: String, images: List<Block.Image> = emptyList()): TurnOutcome = turn(text, images, resume = false)
+
+    /**
+     * Yanitsiz kalan son kullanici mesajini YENIDEN gondermeden ayni gecmisle tekrar dener (mesaj ikilenmez).
+     * Son kayit bir kullanici mesaji degilse hicbir sey yapmaz.
+     */
+    suspend fun resume(): TurnOutcome = turn("", emptyList(), resume = true)
+
+    private suspend fun turn(text: String, images: List<Block.Image>, resume: Boolean): TurnOutcome {
         if (!lock.tryLock()) { discardSafely(images); return TurnOutcome(error = ErrorMapper.busy()) }
         stored = false
         try {
-            return run(text.trim(), images)
+            return run(text.trim(), images, resume)
         } catch (e: kotlinx.coroutines.CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -64,8 +72,11 @@ class AssistantEngine(
         if (images.isNotEmpty()) runCatching { discardImages(images) }
     }
 
-    private suspend fun run(text: String, images: List<Block.Image>): TurnOutcome {
-        if (text.isEmpty() && images.isEmpty()) return TurnOutcome(error = AssistantError(AssistantError.Kind.BAD_REQUEST, "Mesaj boş."))
+    private suspend fun run(text: String, images: List<Block.Image>, resume: Boolean = false): TurnOutcome {
+        if (resume && chat.all().lastOrNull()?.role != Role.USER) {
+            return TurnOutcome(error = AssistantError(AssistantError.Kind.BAD_REQUEST, "Tekrar denenecek bir mesaj yok."))
+        }
+        if (!resume && text.isEmpty() && images.isEmpty()) return TurnOutcome(error = AssistantError(AssistantError.Kind.BAD_REQUEST, "Mesaj boş."))
         if (text.length > MAX_TEXT) return TurnOutcome(error = AssistantError(AssistantError.Kind.BAD_REQUEST, "Mesaj çok uzun (en fazla $MAX_TEXT karakter)."))
         if (images.size > MAX_IMAGES) return TurnOutcome(error = AssistantError(AssistantError.Kind.BAD_REQUEST, "En fazla $MAX_IMAGES görsel eklenebilir."))
         val cfg = config()
@@ -82,14 +93,16 @@ class AssistantEngine(
         // Ilk istegin sayaci mesaj kaydedilmeden alinir: sinirdaysa mesaj/gorsel hic birakilmaz.
         if (!usage.tryAcquire(cfg.provider, cfg.dailyLimit)) return TurnOutcome(error = ErrorMapper.daily())
 
-        val ctx = contextText(day, toolsOn)
         val tag = cfg.provider.name
-        val blocks = ArrayList<Block>()
-        blocks += Block.Context(ctx)
-        if (text.isNotEmpty()) blocks += Block.Text(text)
-        blocks += images
-        chat.append(ChatMessage(Role.USER, blocks, provider = tag, model = cfg.model, createdAt = now()))
-        stored = true
+        if (!resume) {
+            val ctx = contextText(day, toolsOn)
+            val blocks = ArrayList<Block>()
+            blocks += Block.Context(ctx)
+            if (text.isNotEmpty()) blocks += Block.Text(text)
+            blocks += images
+            chat.append(ChatMessage(Role.USER, blocks, provider = tag, model = cfg.model, createdAt = now()))
+            stored = true
+        }
 
         val actionIds = ArrayList<Long>()
         var requests = 0

@@ -33,6 +33,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.emir.gym.ui.AssistantFab
+import com.emir.gym.ui.AssistantScreen
+import com.emir.gym.ui.AssistantSettingsScreen
 import com.emir.gym.ui.DayFolderScreen
 import com.emir.gym.ui.MaxContentWidth
 import com.emir.gym.ui.NutritionScreen
@@ -64,6 +67,11 @@ private fun GymApp(vm: GymViewModel) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     // Açık gün klasörünün hafta günü (1..7); null = Antrenman ana ekranı.
     var folder by rememberSaveable { mutableStateOf<Int?>(null) }
+    // Asistan katmanlari (yigin): "", "chat", "settings", "chat,settings". Geri tusu en ustteki katmani kapatir.
+    var overlay by rememberSaveable { mutableStateOf("") }
+    val layers = overlay.split(',').filter { it.isNotEmpty() }
+    fun push(layer: String) { overlay = (layers + layer).joinToString(",") }
+    fun pop() { overlay = layers.dropLast(1).joinToString(",") }
     val snackbar = remember { SnackbarHostState() }
     val error by vm.error.collectAsState()
     val record by vm.newRecord.collectAsState()
@@ -77,11 +85,30 @@ private fun GymApp(vm: GymViewModel) {
         GymNavItem(stringResource(R.string.tab_nutrition), GymIcons.Meal),
         GymNavItem(stringResource(R.string.tab_settings), GymIcons.Sliders),
     )
+    when (layers.lastOrNull()) {
+        "chat" -> {
+            AssistantScreen(
+                vm,
+                onClose = { pop() },
+                onOpenSettings = { push("settings") },
+                onGoTab = { t -> overlay = ""; folder = null; tab = t },
+            )
+            return
+        }
+        "settings" -> {
+            AssistantSettingsScreen(vm, onBack = { pop() })
+            return
+        }
+    }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = {
             Column {
+                // Sohbet dugmesi: alt cubugun ustunde, icerigi kapatmaz (cubukla birlikte yer ayirir); dinlenme sayacinin ustunde.
+                Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), contentAlignment = Alignment.CenterEnd) {
+                    AssistantFab(onClick = { push("chat") })
+                }
                 RestPillHost(vm)
                 GymBottomBar(
                     items = items,
@@ -105,7 +132,7 @@ private fun GymApp(vm: GymViewModel) {
             1 -> WeeklyScreen(vm, m)
             2 -> ProgressScreen(vm, m)
             3 -> NutritionScreen(vm, onOpenSettings = { tab = SETTINGS_TAB }, modifier = m)
-            else -> SettingsScreen(vm, m)
+            else -> SettingsScreen(vm, m, onOpenAssistantSettings = { push("settings") })
         }
     }
     record?.let { r ->

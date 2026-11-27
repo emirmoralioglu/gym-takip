@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Sohbet: genel -->
+    <string name="asst_fab">Asistan</string>
+    <string name="asst_title">Asistan</string>
+    <string name="asst_no_model">model yok</string>
+    <string name="asst_back">Geri</string>
+    <string name="asst_menu">Menü</string>
+    <string name="asst_open_settings">Asistan ayarları</string>
+    <string name="asst_clear_chat">Sohbeti temizle</string>
+    <string name="asst_clear_title">Sohbet temizlensin mi?</string>
+    <string name="asst_clear_text">Tüm mesajlar, öneriler ve görseller bu cihazdan silinir. Eklenmiş kayıtlar (öğün, su vb.) silinmez.</string>
+    <string name="asst_clear_confirm">Temizle</string>
+
+    <!-- Boş durum ve kurulmamış durum -->
+    <string name="asst_empty_title">Spor asistanın</string>
+    <string name="asst_empty_text">Yediklerini yaz ya da fotoğrafını gönder; öğünlerini, suyunu, kilonu ve antrenman planını birlikte takip edelim. Kayıtlar varsayılan olarak senin onayınla eklenir.</string>
+    <string name="asst_chip_meal">200 g tavuk + 150 g pilav yedim</string>
+    <string name="asst_chip_plan">Bugünün planı ne?</string>
+    <string name="asst_chip_protein">Protein durumum nasıl?</string>
+    <string name="asst_chip_water">Su ekle 500 ml</string>
+    <string name="asst_unconfigured_title">Asistan henüz hazır değil</string>
+    <string name="asst_unconfigured_text">Başlamak için Ayarlar &gt; Asistan\'dan sağlayıcı ve API anahtarı gir.</string>
+
+    <!-- Yazıyor, iptal, hata -->
+    <string name="asst_typing">Asistan yazıyor…</string>
+    <string name="asst_cancel">İptal</string>
+    <string name="asst_cancelling">İptal ediliyor…</string>
+    <string name="asst_cancelling_note">Ağ isteği bitene kadar sürebilir (en çok 90 sn); gelen yanıt yok sayılır.</string>
+    <string name="asst_retry_unsent">Gönderilemedi · Tekrar dene</string>
+    <string name="asst_retry_tool">Yanıt tamamlanamadı · Tekrar dene</string>
+    <string name="asst_retry">Tekrar dene</string>
+    <string name="asst_go_settings">Ayarlara git</string>
+    <string name="asst_dismiss">Kapat</string>
+    <string name="asst_reopens">Yeniden açılma: %1$s</string>
+
+    <!-- Görseller -->
+    <string name="asst_image_missing">Görsel bu cihazda yok</string>
+    <string name="asst_image_desc">Gönderilen görsel</string>
+    <string name="asst_remove_image">Görseli kaldır</string>
+    <string name="asst_image_failed">Görsel eklenemedi.</string>
+    <string name="asst_image_limit">En fazla %1$d görsel eklenebilir.</string>
+    <string name="asst_camera">Fotoğraf çek</string>
+    <string name="asst_gallery">Galeriden seç</string>
+    <string name="asst_camera_failed">Kamera açılamadı.</string>
+    <string name="asst_gallery_failed">Galeri açılamadı.</string>
+    <string name="asst_images_unsupported">Seçili model görsel desteklemiyor (Ayarlar\'dan açılabilir).</string>
+    <string name="asst_need_setup">Önce Ayarlar\'dan sağlayıcı ve anahtarı gir.</string>
+    <string name="asst_wait_sending">Yanıt beklenirken görsel eklenemez.</string>
+    <string name="asst_wait_preparing">Görsel hazırlanıyor, bir saniye bekle.</string>
+
+    <!-- Giriş çubuğu -->
+    <string name="asst_hint">Mesaj yaz…</string>
+    <string name="asst_hint_setup">Önce asistanı ayarla</string>
+    <string name="asst_send">Gönder</string>
+
+    <!-- Öneri kartları -->
+    <string name="asst_card_meal">Öğün önerisi</string>
+    <string name="asst_card_water">Su önerisi</string>
+    <string name="asst_card_weight">Kilo önerisi</string>
+    <string name="asst_card_activity">Etkinlik önerisi</string>
+    <string name="asst_badge_pending">Bekliyor</string>
+    <string name="asst_badge_added">Eklendi</string>
+    <string name="asst_badge_auto">Otomatik eklendi</string>
+    <string name="asst_badge_rejected">Reddedildi</string>
+    <string name="asst_estimate_note">Tahmin; kesin doğru olmayabilir.</string>
+    <string name="asst_edited_note">Düzenlenerek eklendi.</string>
+    <string name="asst_add">Ekle</string>
+    <string name="asst_edit">Düzenle</string>
+    <string name="asst_reject">Reddet</string>
+    <string name="asst_save_and_add">Kaydet ve ekle</string>
+    <string name="asst_cancel_edit">Vazgeç</string>
+    <string name="asst_meal_macros">%1$s g protein · %2$d kcal</string>
+    <string name="asst_carbs_value">%1$s g karbonhidrat</string>
+    <string name="asst_fat_value">%1$s g yağ</string>
+    <string name="asst_water_value">%1$d ml su</string>
+    <string name="asst_weight_value">%1$s kg</string>
+    <string name="asst_minutes_value">%1$d dk</string>
+    <string name="asst_distance_value">%1$d m</string>
+    <string name="asst_today">Bugün</string>
+    <string name="asst_yesterday">Dün</string>
+    <string name="asst_f_desc">Açıklama</string>
+    <string name="asst_f_protein">Protein</string>
+    <string name="asst_f_kcal">Kalori</string>
+    <string name="asst_f_carbs">Karbonhidrat</string>
+    <string name="asst_f_fat">Yağ</string>
+    <string name="asst_f_ml">Su miktarı</string>
+    <string name="asst_f_kg">Kilo</string>
+    <string name="asst_f_minutes">Süre (dk)</string>
+    <string name="asst_f_distance">Mesafe</string>
+    <string name="asst_f_note">Not</string>
+    <string name="asst_added_toast">Eklendi: %1$s</string>
+    <string name="asst_already_confirmed">Bu öneri zaten eklenmişti.</string>
+    <string name="asst_already_rejected">Bu öneri daha önce reddedilmişti.</string>
+    <string name="asst_action_missing">Öneri bulunamadı (sohbet temizlenmiş olabilir).</string>
+    <string name="asst_confirm_failed">Eklenemedi: %1$s</string>
+    <string name="asst_rejected_toast">Öneri reddedildi.</string>
+    <string name="asst_already_done">Bu öneri zaten işlenmişti.</string>
+    <string name="asst_see_nutrition">Beslenme\'de gör</string>
+    <string name="asst_see_settings">Ayarlar\'da gör</string>
+    <string name="asst_see_workout">Antrenman\'da gör</string>
+
+    <!-- Sağlayıcı adları -->
+    <string name="asst_provider_claude">Claude</string>
+    <string name="asst_provider_gemini">Gemini</string>
+    <string name="asst_provider_openai">OpenAI uyumlu</string>
+
+    <!-- Ayarlar sekmesindeki giriş -->
+    <string name="asst_entry_section">Asistan</string>
+    <string name="asst_entry_title">Sohbet asistanı</string>
+    <string name="asst_entry_info">Sağlayıcı, API anahtarı, model ve günlük istek sınırı.</string>
+    <string name="asst_key_present">API anahtarı kayıtlı</string>
+    <string name="asst_key_absent">API anahtarı girilmemiş</string>
+
+    <!-- Asistan ayarları -->
+    <string name="asst_settings_title">Asistan ayarları</string>
+    <string name="asst_sec_provider">Sağlayıcı</string>
+    <string name="asst_sec_key">API anahtarı</string>
+    <string name="asst_sec_model">Model</string>
+    <string name="asst_sec_openai">OpenAI uyumlu sunucu</string>
+    <string name="asst_sec_limit">Günlük istek sınırı</string>
+    <string name="asst_sec_auto">Otomatik ekle</string>
+    <string name="asst_sec_test">Bağlantı</string>
+    <string name="asst_sec_privacy">Gizlilik</string>
+    <string name="asst_provider_note">Her sağlayıcının anahtarı, modeli ve sınırı ayrı tutulur.</string>
+    <string name="asst_key_title">%1$s anahtarı</string>
+    <string name="asst_key_none">Bu sağlayıcı için kayıtlı anahtar yok.</string>
+    <string name="asst_key_saved_masked">Kayıtlı anahtar: %1$s</string>
+    <string name="asst_key_field">API anahtarı</string>
+    <string name="asst_key_new">Yeni anahtar (eskisinin yerine geçer)</string>
+    <string name="asst_paste">Panodan yapıştır</string>
+    <string name="asst_clipboard_empty">Panoda metin yok.</string>
+    <string name="asst_key_save">Anahtarı kaydet</string>
+    <string name="asst_key_saved">Anahtar şifreli olarak kaydedildi.</string>
+    <string name="asst_key_save_failed">Anahtar kaydedilemedi. En az 8 karakter olmalı, boşluk içermemeli.</string>
+    <string name="asst_key_delete">Anahtarı sil</string>
+    <string name="asst_key_delete_title">Anahtar silinsin mi?</string>
+    <string name="asst_key_delete_text">Kayıtlı anahtar bu cihazdan silinir. Asistanı kullanmak için yeniden girmen gerekir.</string>
+    <string name="asst_key_delete_confirm">Sil</string>
+    <string name="asst_key_deleted">Anahtar silindi.</string>
+    <string name="asst_key_delete_failed">Anahtar silinemedi.</string>
+    <string name="asst_model_title">Model</string>
+    <string name="asst_model_field">Model adı</string>
+    <string name="asst_model_invalid">Model adı geçersiz. Harf, rakam ve . _ - : karakterleri kullan.</string>
+    <string name="asst_model_suggest">Öneri: %1$s</string>
+    <string name="asst_model_openai_note">Sağlayıcının belgesindeki model adını yaz.</string>
+    <string name="asst_tier_opus">En güçlü ve en pahalı model (varsayılan).</string>
+    <string name="asst_tier_sonnet">Dengeli: hızlı ve orta maliyetli.</string>
+    <string name="asst_tier_haiku">En hızlı ve en ucuz model.</string>
+    <string name="asst_tier_unknown">Bu model adının maliyeti bilinmiyor.</string>
+    <string name="asst_effort_title">Efor</string>
+    <string name="asst_effort_low">Düşük</string>
+    <string name="asst_effort_medium">Orta</string>
+    <string name="asst_effort_high">Yüksek</string>
+    <string name="asst_effort_note">Yüksek efor daha derin düşünür; daha yavaş ve pahalıdır.</string>
+    <string name="asst_url_title">Sunucu adresi</string>
+    <string name="asst_url_field">Adres (https://…/v1)</string>
+    <string name="asst_url_note">Yalnızca https:// adresleri kabul edilir. Yerel (http) sunucu bu sürümde yok.</string>
+    <string name="asst_url_note_debug">Yalnızca https:// kabul edilir. Bu hata ayıklama derlemesinde ek olarak http://localhost, http://127.0.0.1 ve http://10.0.2.2 de kabul edilir.</string>
+    <string name="asst_url_invalid">Adres kaydedilemedi.</string>
+    <string name="asst_cap_images">Bu model görsel destekliyor</string>
+    <string name="asst_cap_tools">Bu model araç çağrısı destekliyor</string>
+    <string name="asst_limit_title">Günlük istek sınırı</string>
+    <string name="asst_limit_field">İstek sayısı (boş = sınırsız)</string>
+    <string name="asst_limit_suffix">/ 24 sa</string>
+    <string name="asst_limit_invalid">En az %1$d, en çok %2$d olmalı (boş bırakırsan sınırsız).</string>
+    <string name="asst_limit_note" formatted="false">Ücretsiz katmanı korumak için asistan, sınırın %99\'unda durur; ücretliye geçmez. Sınır son 24 saatteki isteklere göre sayılır.</string>
+    <string name="asst_limit_unlimited">Sınır yok; istek sayısı sınırlanmıyor.</string>
+    <string name="asst_limit_remaining">Kalan istek: %1$d / %2$d</string>
+    <string name="asst_auto_title">Önerileri otomatik ekle</string>
+    <string name="asst_auto_note">Kapalıyken her öneri senin onayını bekler.</string>
+    <string name="asst_auto_warn_title">Otomatik ekle açılsın mı?</string>
+    <string name="asst_auto_warn_text">Asistanın tahminleri yanlış olabilir ve eklenen kayıtlar onayın olmadan günlüğe yazılır. Fotoğraf içindeki yazılar da kayıt önerisi tetikleyebilir. Yanlış kayıtları sonradan Beslenme ekranından silebilirsin.</string>
+    <string name="asst_auto_warn_confirm">Aç</string>
+    <string name="asst_test_note">Kısa bir istek atar. Bu 1 istek sayılır ve kalan hakkını azaltır.</string>
+    <string name="asst_test_button">Bağlantıyı test et</string>
+    <string name="asst_test_running">Test ediliyor…</string>
+    <string name="asst_test_ok">Bağlantı çalışıyor.</string>
+    <string name="asst_privacy_photos">Gönderdiğin mesajlar ve fotoğraflar seçtiğin sağlayıcıya iletilir.</string>
+    <string name="asst_privacy_training">Bazı ücretsiz katmanlar gönderilen veriyi model eğitiminde kullanabilir. Sağlayıcının koşullarını kontrol et.</string>
+    <string name="asst_privacy_key">API anahtarı cihazda şifreli saklanır ve yedeğe girmez.</string>
+</resources>
