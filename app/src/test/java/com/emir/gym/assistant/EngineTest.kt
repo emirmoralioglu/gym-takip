@@ -257,7 +257,7 @@ class EngineTest {
         assertEquals("Selam", o.text)
         assertEquals(listOf(Role.USER, Role.ASSISTANT), chat.messages.map { it.role })
         assertTrue(chat.messages[0].blocks[0] is Block.Context)
-        assertEquals(1, usage.count(ProviderId.GEMINI, TODAY.toEpochDay()))
+        assertEquals(1, usage.count(ProviderId.GEMINI))
     }
 
     @Test fun systemPromptIsFixedAndContextLivesInUserMessage() = runBlocking {
@@ -305,7 +305,7 @@ class EngineTest {
         val o = engine().send("su")
         assertEquals(AssistantError.Kind.LOOP_LIMIT, o.error!!.kind)
         assertEquals(6, p.requests.size)
-        assertEquals(6, usage.count(ProviderId.GEMINI, TODAY.toEpochDay()))
+        assertEquals(6, usage.count(ProviderId.GEMINI))
         // gecmis tutarli: son mesaj arac sonuclari
         assertEquals(Role.USER, chat.messages.last().role)
     }
@@ -319,7 +319,7 @@ class EngineTest {
         val o = e.send("3")
         assertEquals(AssistantError.Kind.DAILY_LIMIT, o.error!!.kind)
         assertEquals(2, p.requests.size)
-        assertEquals(0, usage.count(ProviderId.ANTHROPIC, TODAY.toEpochDay()))
+        assertEquals(0, usage.count(ProviderId.ANTHROPIC))
     }
 
     @Test fun dailyLimitCountsEveryToolRound() = runBlocking {

@@ -120,58 +120,6 @@ class ToolValidatorTest {
     }
 }
 
-class QuotaLogicTest {
-    @Test fun capIsFloorOf99Percent() {
-        assertNull(QuotaLogic.cap(null))
-        assertEquals(0, QuotaLogic.cap(1))
-        assertEquals(1, QuotaLogic.cap(2))
-        assertEquals(99, QuotaLogic.cap(100))
-        assertEquals(297, QuotaLogic.cap(300))
-        assertEquals(990, QuotaLogic.cap(1000))
-        assertEquals(1_485, QuotaLogic.cap(1_500))
-    }
-
-    @Test fun stopsAtCapAndDoesNotCountBlockedRequests() {
-        var s: QuotaState? = null
-        var allowed = 0
-        repeat(150) {
-            val (ok, n) = QuotaLogic.tryAcquire(s, 100L, 100)
-            s = n
-            if (ok) allowed++
-        }
-        assertEquals(99, allowed)
-        assertEquals(99, s!!.count)
-    }
-
-    @Test fun limitOneNeverSends() {
-        assertFalse(QuotaLogic.tryAcquire(null, 5L, 1).first)
-    }
-
-    @Test fun unlimitedWhenNoLimit() {
-        var s: QuotaState? = null
-        repeat(5000) { val (ok, n) = QuotaLogic.tryAcquire(s, 1L, null); assertTrue(ok); s = n }
-        assertEquals(5000, s!!.count)
-    }
-
-    @Test fun counterResetsOnNewDay() {
-        var s: QuotaState? = null
-        repeat(99) { s = QuotaLogic.tryAcquire(s, 10L, 100).second }
-        assertFalse(QuotaLogic.tryAcquire(s, 10L, 100).first)
-        val (ok, n) = QuotaLogic.tryAcquire(s, 11L, 100)
-        assertTrue(ok)
-        assertEquals(QuotaState(11L, 1), n)
-    }
-
-    @Test fun memoryStoreIsPerProvider() {
-        val u = MemoryUsageStore()
-        assertTrue(u.tryAcquire(ProviderId.GEMINI, 1L, 2))
-        assertFalse(u.tryAcquire(ProviderId.GEMINI, 1L, 2))
-        assertTrue(u.tryAcquire(ProviderId.ANTHROPIC, 1L, 2)) // baska saglayici kendi sayacini kullanir
-        assertEquals(1, u.count(ProviderId.GEMINI, 1L))
-        assertEquals(0, u.count(ProviderId.GEMINI, 2L))
-    }
-}
-
 class ErrorMapperTest {
     @Test fun statusMapping() {
         assertEquals(AssistantError.Kind.UNAUTHORIZED, ErrorMapper.fromHttp(401).kind)

@@ -282,12 +282,23 @@ class SettingsDeviceTest {
     }
 
     @Test fun usageCounterPersistsAndStopsAt99Percent() {
+        ctx.getSharedPreferences("assistant_usage", Context.MODE_PRIVATE).edit().clear().apply()
         val u = PrefsUsageStore(ctx)
-        ctx.getSharedPreferences("assistant_usage", Context.MODE_PRIVATE).edit().clear().commit()
-        repeat(2) { assertTrue(u.tryAcquire(ProviderId.GEMINI, 50L, 3)) }
-        assertFalse(u.tryAcquire(ProviderId.GEMINI, 50L, 3))
-        assertEquals(2, PrefsUsageStore(ctx).count(ProviderId.GEMINI, 50L))
-        assertTrue(u.tryAcquire(ProviderId.GEMINI, 51L, 3)) // gun degisti
-        ctx.getSharedPreferences("assistant_usage", Context.MODE_PRIVATE).edit().clear().commit()
+        repeat(2) { assertTrue(u.tryAcquire(ProviderId.GEMINI, 3)) } // cap = 2
+        assertFalse(u.tryAcquire(ProviderId.GEMINI, 3))
+        assertEquals(2, PrefsUsageStore(ctx).count(ProviderId.GEMINI)) // yeniden olusturulunca da kalici
+        assertNotNull(u.reopensAt(ProviderId.GEMINI, 3))
+        ctx.getSharedPreferences("assistant_usage", Context.MODE_PRIVATE).edit().clear().apply()
+    }
+
+    @Test fun imageHelperIsNullSafeForMissingFiles() {
+        val prep = ImagePreparer(ctx)
+        assertNull(prep.fileOrNull(null))
+        assertNull(prep.fileOrNull(File(prep.dir, "yok.jpg").absolutePath))
+        assertNull(prep.fileOrNull("/etc/hosts"))
+        prep.dir.mkdirs()
+        val f = File(prep.dir, "var.jpg").also { it.writeText("x") }
+        assertEquals(f.canonicalPath, prep.fileOrNull(f.absolutePath)!!.canonicalPath)
+        f.delete()
     }
 }

@@ -80,7 +80,7 @@ class AssistantEngine(
         val day = today()
 
         // Ilk istegin sayaci mesaj kaydedilmeden alinir: sinirdaysa mesaj/gorsel hic birakilmaz.
-        if (!usage.tryAcquire(cfg.provider, day.toEpochDay(), cfg.dailyLimit)) return TurnOutcome(error = ErrorMapper.daily())
+        if (!usage.tryAcquire(cfg.provider, cfg.dailyLimit)) return TurnOutcome(error = ErrorMapper.daily())
 
         val ctx = contextText(day, toolsOn)
         val tag = cfg.provider.name
@@ -95,7 +95,7 @@ class AssistantEngine(
         var requests = 0
         var lastText = ""
         for (round in 1..MAX_ROUNDS) {
-            if (round > 1 && !usage.tryAcquire(cfg.provider, day.toEpochDay(), cfg.dailyLimit)) {
+            if (round > 1 && !usage.tryAcquire(cfg.provider, cfg.dailyLimit)) {
                 return TurnOutcome(lastText, ErrorMapper.daily(), actionIds, requests)
             }
             requests++

@@ -23,7 +23,7 @@ data class AssistantConfig(
 /** Saf dogrulamalar (testli). */
 object ConfigRules {
     private val MODEL = Regex("^[A-Za-z0-9][A-Za-z0-9._:/@-]{0,99}$")
-    const val MAX_DAILY_LIMIT = 1_000_000
+    const val MAX_DAILY_LIMIT = 10_000
 
     /** floor(%99) >= 1 olan en kucuk sinir: 1 girilirse hicbir istek atilamaz. */
     fun minimumUsableLimit(): Int = 2

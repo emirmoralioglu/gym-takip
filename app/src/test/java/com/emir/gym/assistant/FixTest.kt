@@ -211,3 +211,40 @@ class UiConstantParityTest {
     }
     // MAX_NOTE (80): UI'daki not alaninin sinirsiz oldugu icin ikizi yok; yalnizca asistana ozel sinir.
 }
+
+class ToolIdRepairTest {
+    private fun a(vararg b: Block, raw: String? = null) = ChatMessage(Role.ASSISTANT, b.toList(), raw, "ANTHROPIC", "m")
+    private fun u(vararg b: Block) = ChatMessage(Role.USER, b.toList())
+
+    @Test fun blankAndDuplicateIdsGetUniqueIdsAndResultsFollow() {
+        val msgs = listOf(
+            u(Block.Text("a")),
+            a(Block.ToolUse("", "add_water", "{}"), Block.ToolUse("", "get_today_plan", "{}"), Block.ToolUse("x", "add_water", "{}"), Block.ToolUse("x", "add_water", "{}")),
+            u(Block.ToolResult("", "r1"), Block.ToolResult("", "r2"), Block.ToolResult("x", "r3"), Block.ToolResult("x", "r4")),
+        )
+        val out = History.prepare(msgs, ProviderId.OPENAI_COMPAT, "m")
+        val uses = out[1].blocks.filterIsInstance<Block.ToolUse>().map { it.id }
+        val results = out[2].blocks.filterIsInstance<Block.ToolResult>()
+        assertEquals(4, uses.toSet().size)
+        assertTrue(uses.none { it.isBlank() })
+        assertEquals(uses, results.map { it.id })
+        assertEquals(listOf("r1", "r2", "r3", "r4"), results.map { it.content })
+    }
+
+    @Test fun rawIsComparedByOrderAndCountNotAsSet() {
+        val raw = """[{"type":"tool_use","id":"t1","name":"n","input":{}},{"type":"tool_use","id":"t1","name":"n","input":{}}]"""
+        // bloklarda tek t1 var, ham icerikte iki kez: kume esit ama liste degil -> ham kullanilmaz
+        val msgs = listOf(u(Block.Text("a")), a(Block.ToolUse("t1", "n", "{}"), raw = raw), u(Block.ToolResult("t1", "ok")))
+        val m = ChatMessage(Role.ASSISTANT, msgs[1].blocks, raw, "ANTHROPIC", "m")
+        assertNull(History.prepare(listOf(msgs[0], m, msgs[2]), ProviderId.ANTHROPIC, "m")[1].rawAnthropic)
+        val raw2 = """[{"type":"tool_use","id":"b","name":"n","input":{}},{"type":"tool_use","id":"a","name":"n","input":{}}]"""
+        val m2 = ChatMessage(Role.ASSISTANT, listOf(Block.ToolUse("a", "n", "{}"), Block.ToolUse("b", "n", "{}")), raw2, "ANTHROPIC", "m")
+        val r2 = listOf(msgs[0], m2, u(Block.ToolResult("a", "1"), Block.ToolResult("b", "2")))
+        assertNull("sira farkli", History.prepare(r2, ProviderId.ANTHROPIC, "m")[1].rawAnthropic)
+    }
+
+    @Test fun normalIdsUntouched() {
+        val msgs = listOf(u(Block.Text("a")), a(Block.ToolUse("t1", "n", "{}")), u(Block.ToolResult("t1", "ok")))
+        assertEquals("t1", (History.prepare(msgs, ProviderId.GEMINI, "m")[1].blocks[0] as Block.ToolUse).id)
+    }
+}

@@ -99,4 +99,11 @@ class AssistantController(
     }
 
     fun clearError() { error.value = null }
+
+    /** Gorsel dosyasi yoksa (yeni cihaz, silinmis) null: arayuz yer tutucu gosterir. */
+    fun imageFile(path: String?) = images.fileOrNull(path)
+
+    /** Secili saglayici icin kalan istek hakki (sinirsizsa null) ve yeniden acilma zamani (epoch ms). */
+    fun remainingRequests(): Int? = settings.config.value.let { usage.remaining(it.provider, it.dailyLimit) }
+    fun reopensAt(): Long? = settings.config.value.let { usage.reopensAt(it.provider, it.dailyLimit) }
 }

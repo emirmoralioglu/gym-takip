@@ -113,8 +113,8 @@ object AnthropicWire {
     }
 
     /** Ham icerikteki tool_use kimlikleri. */
-    fun toolUseIds(raw: String?): Set<String> =
-        raw?.let { Js.parse(it) }?.takeIf { it.isArray }?.filter { Js.text(it, "type") == "tool_use" }?.mapNotNull { Js.text(it, "id") }?.toSet().orEmpty()
+    fun toolUseIds(raw: String?): List<String> =
+        raw?.let { Js.parse(it) }?.takeIf { it.isArray }?.filter { Js.text(it, "type") == "tool_use" }?.map { Js.text(it, "id").orEmpty() }.orEmpty()
 }
 
 class AnthropicProvider(

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Android 11 ve oncesi (fullBackupContent): asistan verisi yedege girmez. -->
+<!-- Android 11 ve oncesi (fullBackupContent), bulut yedegi kurali ile ayni: veritabani, gorseller ve anahtarlar disarida. -->
+<!-- (allowBackup=false oldugundan fiilen kullanilmaz.) -->
 <full-backup-content>
     <exclude domain="database" path="gym.db" />
     <exclude domain="database" path="gym.db-wal" />

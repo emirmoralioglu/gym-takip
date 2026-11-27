@@ -156,6 +156,12 @@ class ImagePreparer(context: Context) {
 
     fun deleteAll() { dir.deleteRecursively() }
 
+    /** imagePath'e guvenen kod icin: dosya kendi dizinimizde ve varsa File, yoksa (yeni cihaz, silinmis) null. */
+    fun fileOrNull(path: String?): File? = try {
+        val f = path?.let { File(it) }
+        if (f != null && f.canonicalPath.startsWith(dir.canonicalPath + File.separator) && f.isFile) f else null
+    } catch (e: Exception) { null }
+
     /** Tek gorseli ve onizlemesini siler (yalniz kendi dizinimizde). */
     fun delete(path: String) {
         runCatching {
