@@ -87,8 +87,11 @@ class AssistantController(
         scope.launch(NonCancellable + Dispatchers.IO) { list.forEach { images.delete(it.path) } }
     }
 
+    /** Tek 'mesgul' durumu: gonderim, baglanti testi ya da motor surerken yeni is baslamaz. */
+    private fun idle() = ChatBusy.idle(sending.value, testing.value, engine.isBusy)
+
     fun send(text: String, imageUris: List<Uri> = emptyList(), onDone: (SendResult) -> Unit = {}) {
-        if (sending.value) { error.value = ErrorMapper.busy(); onDone(SendResult(false, error.value)); return }
+        if (!idle()) { error.value = ErrorMapper.busy(); onDone(SendResult(false, error.value)); return }
         sending.value = true
         cancelling.value = false
         error.value = null
@@ -110,7 +113,14 @@ class AssistantController(
 
     /** Onceden hazirlanmis gorsellerle gonderim (gorseller gonderimden sonra sohbetin parcasi olur; hata olursa motor siler). */
     fun sendPrepared(text: String, prepared: List<PreparedImage>, onDone: (SendResult) -> Unit = {}) {
-        if (sending.value) { discard(prepared); error.value = ErrorMapper.busy(); onDone(SendResult(false, error.value)); return }
+        if (!idle()) { discard(prepared); error.value = ErrorMapper.busy(); onDone(SendResult(false, error.value)); return }
+        // Gorsel dosyasi diskte yoksa (ornegin sohbet temizlendi) sessizce gorselsiz GONDERILMEZ.
+        if (prepared.any { images.fileOrNull(it.path) == null }) {
+            discard(prepared)
+            error.value = AssistantError(AssistantError.Kind.BAD_REQUEST, "Görsel bulunamadı (silinmiş olabilir). Görseli yeniden ekle.")
+            onDone(SendResult(false, error.value))
+            return
+        }
         sending.value = true
         cancelling.value = false
         error.value = null
@@ -119,7 +129,7 @@ class AssistantController(
 
     /** Yanitsiz kalan son kullanici mesajini ayni gecmisle yeniden dener (mesaj ikilenmez). */
     fun resume(onDone: (SendResult) -> Unit = {}) {
-        if (sending.value) { error.value = ErrorMapper.busy(); onDone(SendResult(false, error.value)); return }
+        if (!idle()) { error.value = ErrorMapper.busy(); onDone(SendResult(false, error.value)); return }
         sending.value = true
         cancelling.value = false
         error.value = null
@@ -171,10 +181,17 @@ class AssistantController(
     }
 
     /** Sohbeti temizle: mesajlar, oneriler ve gorseller silinir. Gonderim surerken yapilmaz. */
-    fun clearChat() {
-        if (engine.isBusy || sending.value) { error.value = ErrorMapper.busy(); return }
+    fun clearChat() { clearChatNow() }
+
+    /** @return false: mesgul, temizlenmedi. */
+    fun clearChatNow(): Boolean {
+        if (!idle()) { error.value = ErrorMapper.busy(); return false }
         scope.launch(Dispatchers.IO) { repository.clearChat(images.dir) }
+        return true
     }
+
+    /** Dosya diskte mi (gonderimden once kontrol). */
+    fun imageExists(path: String): Boolean = images.fileOrNull(path) != null
 
     fun clearError() { error.value = null }
 
@@ -210,7 +227,7 @@ class AssistantController(
      * @return null = baglanti calisiyor; aksi halde Turkce hata.
      */
     suspend fun testConnection(): AssistantError? {
-        if (sending.value || engine.isBusy || testing.value) return ErrorMapper.busy()
+        if (!idle()) return ErrorMapper.busy()
         testing.value = true
         try {
             val cfg = settings.config.value
@@ -248,4 +265,9 @@ object ImageOrphans {
         val base = if (n.endsWith("_thumb.jpg")) n.removeSuffix("_thumb.jpg") + ".jpg" else n
         base !in referencedNames
     }
+}
+
+/** Tek 'mesgul' kurali (gonderim / baglanti testi / motor): hicbiri suruyorsa bos. */
+object ChatBusy {
+    fun idle(sending: Boolean, testing: Boolean, engineBusy: Boolean): Boolean = !sending && !testing && !engineBusy
 }

@@ -148,7 +148,7 @@ object ToolValidator {
             "ara" -> MealType.ARA
             else -> return bad("meal_type kahvalti, ogle, aksam ya da ara olmalı")
         }
-        val desc = Js.text(a, "description")?.trim().orEmpty()
+        val desc = TextClean.clean(Js.text(a, "description").orEmpty())
         if (desc.isEmpty()) return bad("açıklama boş olamaz")
         if (desc.length > MealForm.MAX_DESC) return bad("açıklama en fazla ${MealForm.MAX_DESC} karakter olabilir")
         val protein = num(a.get("protein_g")) ?: return bad("protein_g sayı olmalı")
@@ -183,7 +183,7 @@ object ToolValidator {
             if (dist < 1 || dist > ToolDefs.MAX_DISTANCE_M) return bad("mesafe 1 ile ${ToolDefs.MAX_DISTANCE_M} m arasında olmalı")
             if (type != ActivityType.YUZME) return bad("mesafe yalnızca yüzme için girilebilir")
         }
-        val note = Js.text(a, "note")?.trim().orEmpty()
+        val note = TextClean.clean(Js.text(a, "note").orEmpty())
         if (note.length > ToolDefs.MAX_NOTE) return bad("not en fazla ${ToolDefs.MAX_NOTE} karakter olabilir")
         return Validation.Ok(ActionPayload.LogActivity(d, type, minutes, dist, note))
     }

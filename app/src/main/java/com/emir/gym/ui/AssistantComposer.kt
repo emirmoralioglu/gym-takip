@@ -67,8 +67,10 @@ fun ChatComposer(ui: AssistantUiModel, config: AssistantConfig, configured: Bool
     val imagesOk = ComposerRules.supportsImages(config)
     val attached = ui.attached
     val preparing = ui.preparing
-    val canSend = ComposerRules.canSend(ui.draft, attached.size, sending, preparing > 0, configured)
-    val canAttach = ComposerRules.canAttach(imagesOk, attached.size + preparing, sending, preparing > 0, configured)
+    val testing by ui.ctl.testing.collectAsState()
+    val blocked = sending || testing
+    val canSend = ComposerRules.canSend(ui.draft, attached.size, blocked, preparing > 0, configured)
+    val canAttach = ComposerRules.canAttach(imagesOk, attached.size + preparing, blocked, preparing > 0, configured)
 
     var camPath by rememberSaveable { mutableStateOf<String?>(null) }
     val camera = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { ok ->
@@ -86,13 +88,13 @@ fun ChatComposer(ui: AssistantUiModel, config: AssistantConfig, configured: Bool
 
     // Onceki oturumdan kalan gecici kamera dosyalari (surec/etkinlik olumu) temizlenir.
     LaunchedEffect(Unit) {
-        File(context.cacheDir, "camera").listFiles()?.forEach { if (it.absolutePath != camPath) it.delete() }
+        File(context.cacheDir, "camera").listFiles()?.forEach { if (it.absolutePath != camPath && !ui.isTempInUse(it.path)) it.delete() }
     }
 
     fun reason(): String = when {
         !configured -> context.getString(R.string.asst_need_setup)
         !imagesOk -> context.getString(R.string.asst_images_unsupported)
-        sending -> context.getString(R.string.asst_wait_sending)
+        blocked -> context.getString(R.string.asst_wait_sending)
         preparing > 0 -> context.getString(R.string.asst_wait_preparing)
         else -> context.getString(R.string.asst_image_limit, ComposerRules.MAX_IMAGES)
     }

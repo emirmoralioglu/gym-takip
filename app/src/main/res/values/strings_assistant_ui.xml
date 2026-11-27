@@ -39,6 +39,7 @@
     <string name="asst_image_desc">Gönderilen görsel</string>
     <string name="asst_remove_image">Görseli kaldır</string>
     <string name="asst_image_failed">Görsel eklenemedi.</string>
+    <string name="asst_image_gone">Görsel bulunamadı (silinmiş olabilir); kaldırıldı. Gerekirse yeniden ekle.</string>
     <string name="asst_image_limit">En fazla %1$d görsel eklenebilir.</string>
     <string name="asst_camera">Fotoğraf çek</string>
     <string name="asst_gallery">Galeriden seç</string>

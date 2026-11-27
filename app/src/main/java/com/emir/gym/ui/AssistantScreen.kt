@@ -221,7 +221,8 @@ private fun ChatBody(
         return
     }
     val items = remember(snapshot) { ChatItems.build(snapshot.messages, snapshot.actions) }
-    val shown = remember(items, snapshot, sending) { ChatItems.withRetry(items, snapshot.messages, sending) }
+    val dailyFull = error?.kind == com.emir.gym.assistant.AssistantError.Kind.DAILY_LIMIT
+    val shown = remember(items, snapshot, sending, dailyFull) { ChatItems.withRetry(items, snapshot.messages, sending, hideRetry = dailyFull) }
     val listState = rememberLazyListState()
     val resumable = ChatItems.resumable(snapshot.messages)
 
@@ -389,7 +390,13 @@ fun ImageThumb(ctl: AssistantController, path: String, sizeDp: Int) {
     val state by produceState<ThumbState>(ThumbState.Loading, path) {
         value = withContext(Dispatchers.IO) {
             val f = ctl.previewFile(path) ?: return@withContext ThumbState.Missing
-            val opts = android.graphics.BitmapFactory.Options().apply { inSampleSize = 2 }
+            // Bellek guvenli: once boyut okunur, hedefe (en az ~3x dp piksel) gore ornekleme yapilir (thumb yoksa tam gorsel buyuk olabilir).
+            val bounds = android.graphics.BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            android.graphics.BitmapFactory.decodeFile(f.absolutePath, bounds)
+            if (bounds.outWidth <= 0 || bounds.outHeight <= 0) return@withContext ThumbState.Missing
+            val opts = android.graphics.BitmapFactory.Options().apply {
+                inSampleSize = com.emir.gym.assistant.ImageMath.sampleSize(bounds.outWidth, bounds.outHeight, sizeDp * 3)
+            }
             android.graphics.BitmapFactory.decodeFile(f.absolutePath, opts)?.let { ThumbState.Ready(it.asImageBitmap()) } ?: ThumbState.Missing
         }
     }

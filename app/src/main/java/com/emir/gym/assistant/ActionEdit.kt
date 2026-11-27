@@ -8,6 +8,25 @@ import java.time.LocalDate
  * Kullanicinin duzeltip onayladigi oneri icin saf dogrulama. Sinirlar [ToolValidator] ve formlarla AYNIDIR
  * (protein <= 300, karbonhidrat <= 1000, yag <= 500, kalori <= 5000, aciklama <= 80, su <= 5000).
  */
+/**
+ * Model ciktisindaki gorunmez / yon degistiren karakterleri atar (kartta gorunen = kayitta olan):
+ * kontrol (Cc: satir sonu, sekme dahil -> bosluk), bicim (Cf: U+200E/F, U+202A-E, U+2066-2069, sifir genislik, BOM),
+ * satir/paragraf ayiricilari. Sonra bosluklar sadelestirilir ve kirpilir.
+ */
+object TextClean {
+    fun clean(s: String): String {
+        val sb = StringBuilder(s.length)
+        for (ch in s) {
+            when (Character.getType(ch).toByte()) {
+                Character.FORMAT -> {}
+                Character.CONTROL, Character.LINE_SEPARATOR, Character.PARAGRAPH_SEPARATOR -> sb.append(' ')
+                else -> sb.append(ch)
+            }
+        }
+        return sb.toString().replace(Regex(" {2,}"), " ").trim()
+    }
+}
+
 object ActionEdit {
     /** @return null = gecerli; aksi halde kullaniciya gosterilecek kisa Turkce hata. */
     fun check(p: ActionPayload, today: LocalDate = LocalDate.now()): String? {
@@ -17,8 +36,8 @@ object ActionEdit {
         fun bad(v: Double, max: Double) = !v.isFinite() || v < 0 || v > max
         return when (p) {
             is ActionPayload.AddMeal -> when {
-                p.description.trim().isEmpty() -> "Açıklama boş olamaz."
-                p.description.trim().length > MealForm.MAX_DESC -> "Açıklama en fazla ${MealForm.MAX_DESC} karakter olabilir."
+                TextClean.clean(p.description).isEmpty() -> "Açıklama boş olamaz."
+                TextClean.clean(p.description).length > MealForm.MAX_DESC -> "Açıklama en fazla ${MealForm.MAX_DESC} karakter olabilir."
                 bad(p.proteinG, MealForm.MAX_PROTEIN) -> "Protein 0 ile ${MealForm.MAX_PROTEIN.toInt()} g arasında olmalı."
                 p.calories < 0 || p.calories > MealForm.MAX_KCAL -> "Kalori 0 ile ${MealForm.MAX_KCAL} arasında olmalı."
                 p.carbsG != null && bad(p.carbsG, MealForm.MAX_CARBS) -> "Karbonhidrat 0 ile ${MealForm.MAX_CARBS.toInt()} g arasında olmalı."
@@ -33,16 +52,24 @@ object ActionEdit {
                 p.minutes < 1 || p.minutes > ToolDefs.MAX_MINUTES -> "Süre 1 ile ${ToolDefs.MAX_MINUTES} dakika arasında olmalı."
                 p.distanceM != null && (p.distanceM < 1 || p.distanceM > ToolDefs.MAX_DISTANCE_M) -> "Mesafe 1 ile ${ToolDefs.MAX_DISTANCE_M} m arasında olmalı."
                 p.distanceM != null && p.activity != com.emir.gym.data.ActivityType.YUZME -> "Mesafe yalnızca yüzme için girilebilir."
-                p.note.trim().length > ToolDefs.MAX_NOTE -> "Not en fazla ${ToolDefs.MAX_NOTE} karakter olabilir."
+                TextClean.clean(p.note).length > ToolDefs.MAX_NOTE -> "Not en fazla ${ToolDefs.MAX_NOTE} karakter olabilir."
                 else -> null
             }
         }
     }
 
-    /** Kaydi duzenlenmis haliyle temizler (bosluklar). */
+    private fun round1(v: Double) = Math.round(v * 10) / 10.0
+
+    /** Kaydi [ToolValidator] ile AYNI bicimde temizler: metinler, protein/karb/yag 1 hane, kilo 2 hane. */
     fun normalize(p: ActionPayload): ActionPayload = when (p) {
-        is ActionPayload.AddMeal -> p.copy(description = p.description.trim())
-        is ActionPayload.LogActivity -> p.copy(note = p.note.trim())
+        is ActionPayload.AddMeal -> p.copy(
+            description = TextClean.clean(p.description),
+            proteinG = if (p.proteinG.isFinite()) round1(p.proteinG) else p.proteinG,
+            carbsG = p.carbsG?.let { if (it.isFinite()) round1(it) else it },
+            fatG = p.fatG?.let { if (it.isFinite()) round1(it) else it },
+        )
+        is ActionPayload.LogActivity -> p.copy(note = TextClean.clean(p.note))
+        is ActionPayload.LogWeight -> if (p.kg.isFinite()) p.copy(kg = Math.round(p.kg * 100) / 100.0) else p
         else -> p
     }
 }

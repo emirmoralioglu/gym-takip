@@ -139,8 +139,8 @@ object ChatItems {
     fun resumable(messages: List<ChatMessage>): Boolean = messages.lastOrNull()?.role == Role.USER
 
     /** Tekrar-dene ogesi: yalniz bekleyen gonderim yokken ve yanitsiz mesaj varsa. */
-    fun withRetry(items: List<ChatItem>, messages: List<ChatMessage>, sending: Boolean): List<ChatItem> {
-        if (sending || !resumable(messages)) return items
+    fun withRetry(items: List<ChatItem>, messages: List<ChatMessage>, sending: Boolean, hideRetry: Boolean = false): List<ChatItem> {
+        if (sending || hideRetry || !resumable(messages)) return items
         val last = messages.last()
         val toolStep = last.blocks.any { it is Block.ToolResult }
         return items + ChatItem.Retry(toolStep)
@@ -282,9 +282,10 @@ object CardEdit {
             }
         }
         if (payload == null) return Result.Invalid(bad, msg ?: "Değerler geçersiz.")
-        // Son kapi: arka uctaki ayni kural.
-        ActionEdit.check(payload, today)?.let { return Result.Invalid(emptySet(), it) }
-        return Result.Ok(payload)
+        // Son kapi: arka uctaki ayni kural; kayit arka uctaki gibi temizlenir/yuvarlanir.
+        val clean = ActionEdit.normalize(payload)
+        ActionEdit.check(clean, today)?.let { return Result.Invalid(emptySet(), it) }
+        return Result.Ok(clean)
     }
 
     /** Kartin duzenlenebilir alanlari (kilo/su/etkinlik icin dar form). */
