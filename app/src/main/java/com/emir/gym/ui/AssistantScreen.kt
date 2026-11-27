@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -227,7 +228,11 @@ private fun ChatBody(
     // Yeni mesaj / kart / gosterge gelince en alta kay.
     LaunchedEffect(shown.size, shown.lastOrNull()?.key, sending) {
         val n = shown.size + (if (sending) 1 else 0)
-        if (n > 0) listState.animateScrollToItem(n - 1)
+        if (n > 0) {
+            // Once son ogeye atla (yuksekligi bilinmeyen ogelerde animasyon yarida kalabilir), sonra gercek dibe in.
+            listState.scrollToItem(n - 1)
+            listState.scrollBy(1_000_000f)
+        }
     }
 
     Column(modifier.fillMaxSize()) {
