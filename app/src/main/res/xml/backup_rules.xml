@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 11 ve oncesi (fullBackupContent), bulut yedegi kurali ile ayni: veritabani, gorseller ve anahtarlar disarida. -->
+<!-- (allowBackup=false oldugundan fiilen kullanilmaz.) -->
+<full-backup-content>
+    <exclude domain="database" path="gym.db" />
+    <exclude domain="database" path="gym.db-wal" />
+    <exclude domain="database" path="gym.db-shm" />
+    <exclude domain="database" path="gym.db-journal" />
+    <exclude domain="file" path="chat/" />
+    <exclude domain="sharedpref" path="assistant_keys.xml" />
+    <exclude domain="sharedpref" path="assistant_usage.xml" />
+</full-backup-content>

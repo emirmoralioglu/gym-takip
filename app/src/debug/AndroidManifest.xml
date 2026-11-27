@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Yalniz debug: yerel sahte sunucu testleri icin localhost/10.0.2.2 cleartext. Release'e girmez. -->
+    <application android:networkSecurityConfig="@xml/network_security_config" />
+</manifest>

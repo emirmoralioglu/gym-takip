@@ -66,6 +66,11 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
             trackingDao.observeWater().map { true },
         ) { a, b -> a && b }.hot(false)
 
+    /** Sohbet asistani (arka plan katmani); ilk kullanimda olusturulur. Arayuz sonraki turda baglanir. */
+    val assistant: com.emir.gym.assistant.AssistantController by lazy {
+        com.emir.gym.assistant.AssistantController(app, viewModelScope) { goals.value }
+    }
+
     /** Kullaniciya gosterilecek mesaj (hata ya da bilgi). */
     val error = MutableStateFlow<String?>(null)
 
