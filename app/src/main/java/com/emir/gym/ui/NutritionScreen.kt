@@ -5,6 +5,8 @@ import android.os.SystemClock
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -243,11 +245,12 @@ private fun MealsCard(meals: List<Meal>, onAdd: () -> Unit, onEdit: (Meal) -> Un
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun WaterCard(logs: List<WaterLog>, onAdd: (Int) -> Unit, onCustom: () -> Unit, onDelete: (WaterLog) -> Unit) {
     val scheme = MaterialTheme.colorScheme
     AppCard(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(250, 500, 1000).forEach { ml ->
                 GymChip(stringResource(R.string.nutr_water_chip, UiFormat.grouped(ml.toLong())), selected = false, onClick = { onAdd(ml) })
             }
