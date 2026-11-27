@@ -29,6 +29,7 @@ import com.emir.gym.R
 import com.emir.gym.data.CustomExercise
 import com.emir.gym.data.ExerciseCatalog
 import com.emir.gym.data.MuscleGroup
+import com.emir.gym.ui.theme.Radii
 
 private sealed interface PickerRow {
     data class Header(val title: String) : PickerRow
@@ -45,17 +46,24 @@ fun ExercisePickerDialog(
     onDismiss: () -> Unit,
 ) {
     var adding by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
     val customHeader = stringResource(R.string.exercise_custom_section)
-    val rows = remember(custom, customHeader) {
+    val rows = remember(custom, customHeader, query) {
+        val q = ExerciseCatalog.key(query)
+        fun matches(name: String) = q.isEmpty() || ExerciseCatalog.key(name).contains(q)
         buildList {
             add(PickerRow.AddCustom)
-            if (custom.isNotEmpty()) {
+            val mine = custom.filter { matches(it.name) }
+            if (mine.isNotEmpty()) {
                 add(PickerRow.Header(customHeader))
-                custom.forEach { add(PickerRow.Item(it.name, MuscleGroup.fromKey(it.muscleGroup))) }
+                mine.forEach { add(PickerRow.Item(it.name, MuscleGroup.fromKey(it.muscleGroup))) }
             }
             ExerciseCatalog.byGroup().forEach { (g, list) ->
-                add(PickerRow.Header(g.label))
-                list.forEach { add(PickerRow.Item(it.name, g)) }
+                val found = list.filter { matches(it.name) }
+                if (found.isNotEmpty()) {
+                    add(PickerRow.Header(g.label))
+                    found.forEach { add(PickerRow.Item(it.name, g)) }
+                }
             }
         }
     }
@@ -64,7 +72,15 @@ fun ExercisePickerDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.exercise_picker_title)) },
         text = {
-            LazyColumn(Modifier.heightIn(max = 420.dp)) {
+            Column {
+            OutlinedTextField(
+                query, { query = it },
+                label = { Text(stringResource(R.string.screens_search)) },
+                singleLine = true,
+                shape = Radii.inner,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            LazyColumn(Modifier.heightIn(max = 380.dp)) {
                 items(rows) { row ->
                     when (row) {
                         is PickerRow.Header -> Text(
@@ -75,6 +91,7 @@ fun ExercisePickerDialog(
                         )
                         is PickerRow.Item -> Text(
                             row.name,
+                            style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier.fillMaxWidth().clickable { onPick(row.name, row.group) }.padding(vertical = 12.dp),
                         )
                         PickerRow.AddCustom -> Column {
@@ -88,6 +105,7 @@ fun ExercisePickerDialog(
                         }
                     }
                 }
+            }
             }
         },
         confirmButton = {},

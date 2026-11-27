@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="screens_weekday_full">
+        <item>Pazartesi</item>
+        <item>Salı</item>
+        <item>Çarşamba</item>
+        <item>Perşembe</item>
+        <item>Cuma</item>
+        <item>Cumartesi</item>
+        <item>Pazar</item>
+    </string-array>
+
+    <plurals name="screens_exercise_count">
+        <item quantity="one">%d hareket</item>
+        <item quantity="other">%d hareket</item>
+    </plurals>
+
+    <!-- Genel -->
+    <string name="screens_tab_workout">Antrenman</string>
+    <string name="screens_loading">Yükleniyor…</string>
+    <string name="screens_back">Geri</string>
+    <string name="screens_save">Kaydet</string>
+    <string name="screens_saved">Kaydedildi</string>
+    <string name="screens_delete">Sil</string>
+    <string name="screens_edit">Düzenle</string>
+    <string name="screens_done">Bitti</string>
+    <string name="screens_change">Değiştir</string>
+    <string name="screens_replace">Değiştir</string>
+    <string name="screens_custom">Özel</string>
+    <string name="screens_search">Ara</string>
+    <string name="screens_note">Not</string>
+    <string name="screens_records">Kayıtlar</string>
+    <string name="screens_today">Bugün</string>
+    <string name="screens_kg">kg</string>
+    <string name="screens_kg_value">%s kg</string>
+    <string name="screens_kg_field">Ağırlık</string>
+    <string name="screens_kg_invalid">Geçerli bir kilo gir (0 ile 500 kg arası, ondalık için nokta).</string>
+    <string name="screens_minutes">%s dk</string>
+    <string name="screens_meters">%s m</string>
+    <string name="screens_approx_minutes">~%d dk</string>
+    <string name="screens_set_count">%d set</string>
+    <string name="screens_unit_min">dk</string>
+    <string name="screens_unit_m">m</string>
+    <string name="screens_unit_sec">sn</string>
+    <string name="screens_unit_ml">ml</string>
+    <string name="screens_unit_kcal">kcal</string>
+    <string name="screens_sets">Set</string>
+    <string name="screens_reps">Tekrar</string>
+    <string name="screens_minutes_field">Süre</string>
+    <string name="screens_tonnage_kg">%s kg</string>
+    <string name="screens_last_value">Son: %s kg</string>
+
+    <!-- Aktivite adları -->
+    <string name="screens_act_swim">Yüzme</string>
+    <string name="screens_act_sauna">Sauna</string>
+    <string name="screens_act_steam">Buhar</string>
+
+    <!-- Antrenman ana ekranı -->
+    <string name="screens_this_week">Bu hafta</string>
+    <string name="screens_workouts_caption">antrenman</string>
+    <string name="screens_weekly_tonnage">Haftalık tonaj</string>
+    <string name="screens_today_caps">Bugün · %s</string>
+    <string name="screens_start_workout">Antrenmana başla</string>
+    <string name="screens_open_folder">Klasörü aç</string>
+    <string name="screens_today_done">Bugünkü antrenman kaydedildi</string>
+    <string name="screens_log_swim">Yüzmeyi kaydet</string>
+    <string name="screens_swim_done">Bugünkü yüzme kaydedildi</string>
+    <string name="screens_rest_day">Dinlenme günü</string>
+    <string name="screens_rest_message">Bugün dinlenme günü. Uyku ve beslenmeye odaklan.</string>
+    <string name="screens_rest_add_sauna">Sauna / buhar ekle</string>
+    <string name="screens_activity_week">Bu hafta aktivite</string>
+
+    <!-- Gün klasörü -->
+    <string name="screens_date_label">Tarih</string>
+    <string name="screens_section_plan">Plan</string>
+    <string name="screens_section_history">Geçmiş</string>
+    <string name="screens_add_set">Set ekle</string>
+    <string name="screens_add_exercise">Hareket ekle</string>
+    <string name="screens_edit_plan">Planı düzenle</string>
+    <string name="screens_exercise_in_plan">Bu hareket bu günün planında zaten var.</string>
+    <string name="screens_plan_empty_title">Bu günün planı boş</string>
+    <string name="screens_plan_empty_message">Hareket ekleyerek bu güne antrenman planı oluştur.</string>
+    <string name="screens_bulk_entry">Toplu kayıt: %s (Geçmiş bölümünden düzenlenir)</string>
+    <string name="screens_fill_last">Geçen seferki ağırlıkları doldur</string>
+    <string name="screens_fill_none">Doldurulacak önceki kayıt bulunamadı.</string>
+    <string name="screens_fill_done">%1$d set satırı %2$s tarihinden dolduruldu</string>
+    <string name="screens_fill_confirm_title">Girdiklerin değişecek</string>
+    <string name="screens_fill_confirm_text">Tamamlanmamış setlere girdiğin ağırlıklar %1$s tarihindeki değerlerle değiştirilecek. Tamamlanan setler ve kayıtlar değişmez.</string>
+    <string name="screens_fill_confirm_yes">Doldur</string>
+    <string name="screens_move_up">Yukarı taşı</string>
+    <string name="screens_move_down">Aşağı taşı</string>
+    <string name="screens_plan_summary">%1$d×%2$d · %3$d sn dinlenme</string>
+    <string name="screens_rest_seconds">Dinlenme</string>
+    <string name="screens_plan_edit_error">Set 1-%1$d, tekrar 1-%2$d, dinlenme %3$d-%4$d sn arasında olmalı.</string>
+    <string name="screens_delete_plan_exercise_title">Hareket plandan silinsin mi?</string>
+    <string name="screens_delete_plan_exercise_text">%s bu günün planından çıkarılır. Geçmiş kayıtların silinmez.</string>
+
+    <!-- Geçmiş -->
+    <string name="screens_history_empty_title">Henüz geçmiş yok</string>
+    <string name="screens_history_empty_workout">Bu hafta gününde kaydedilmiş antrenman yok. Plan bölümünden set işaretlediğinde burada görünür.</string>
+    <string name="screens_history_empty_activity">Bu hafta gününde kayıtlı aktivite yok.</string>
+    <string name="screens_delete_record_title">Kayıt silinsin mi?</string>
+    <string name="screens_delete_entry_text">%1$s %2$d×%3$d kaydı silinecek.</string>
+    <string name="screens_delete_activity_text">%1$s (%2$d dk) kaydı silinecek.</string>
+
+    <!-- Yüzme ve sonrası -->
+    <string name="screens_swim_title">Yüzme kaydı</string>
+    <string name="screens_swim_minutes">Süre</string>
+    <string name="screens_swim_distance">Mesafe (isteğe bağlı)</string>
+    <string name="screens_swim_minutes_error">Süre 1 ile %1$d dk arasında olmalı.</string>
+    <string name="screens_swim_distance_error">Mesafe 1 ile %1$d m arasında olmalı; boş bırakabilirsin.</string>
+    <string name="screens_swim_saved">Yüzme kaydedildi</string>
+    <string name="screens_after_title">Sonrası</string>
+    <string name="screens_after_added">%1$s %2$d dk eklendi</string>
+
+    <!-- Haftalık -->
+    <string name="screens_week_range">%1$s - %2$s</string>
+    <string name="screens_tonnage">Tonaj</string>
+    <string name="screens_sets_total">Toplam set</string>
+    <string name="screens_training_days">Antrenman günü</string>
+    <string name="screens_daily_tonnage">Gün bazlı tonaj</string>
+    <string name="screens_week_empty">Bu hafta henüz kayıt yok.</string>
+    <string name="screens_compare">Geçen haftayla karşılaştırma</string>
+    <string name="screens_delta_percent">%s%%</string>
+    <string name="screens_vs_last_week">geçen hafta</string>
+    <string name="screens_no_last_week">kıyas yok</string>
+    <string name="screens_last_week_value">Geçen hafta: %s</string>
+
+    <!-- İlerleme -->
+    <string name="screens_records_empty_title">Henüz rekor yok</string>
+    <string name="screens_chart_empty_title">Henüz grafik yok</string>
+
+    <!-- Ayarlar -->
+    <string name="screens_weigh_section">Tartı</string>
+    <string name="screens_weigh_today">Bugünkü tartı</string>
+    <string name="screens_weigh_existing">Bugün kayıtlı: %s kg</string>
+    <string name="screens_weigh_add">Bugünkü tartıyı ekle</string>
+    <string name="screens_weigh_update">Bugünkü tartıyı güncelle</string>
+    <string name="screens_weigh_added">Tartı kaydedildi</string>
+    <string name="screens_weigh_replace_title">Bugünkü tartı değişsin mi?</string>
+    <string name="screens_weigh_replace_text">Bugün için kayıtlı %1$s kg, %2$s kg ile değiştirilecek.</string>
+    <string name="screens_weight_chart">Kilo</string>
+    <string name="screens_delete_weight_text">%2$s tarihli %1$s kg tartı silinecek.</string>
+    <string name="screens_goals_section">Hedefler</string>
+    <string name="screens_weight_setting">Vücut ağırlığı ayarı</string>
+    <string name="screens_weight_setting_info">Tartı kaydın varsa protein hesabında son tartı kullanılır; yoksa bu değer kullanılır. Boş bırakıp kaydedersen temizlenir.</string>
+    <string name="screens_protein_title">Günlük protein aralığı</string>
+    <string name="screens_protein_range">%1$s–%2$s g</string>
+    <string name="screens_protein_basis">%1$s kg × %2$s–%3$s g/kg</string>
+    <string name="screens_protein_need_weight">Kilo girin: tartı ekle ya da vücut ağırlığı ayarını doldur.</string>
+    <string name="screens_water_goal">Su hedefi</string>
+    <string name="screens_water_field">Günlük hedef</string>
+    <string name="screens_calorie_goal">Kalori hedefi</string>
+    <string name="screens_calorie_info">İsteğe bağlı. Boş bırakıp kaydedersen temizlenir.</string>
+    <string name="screens_calorie_field">Günlük hedef</string>
+</resources>
