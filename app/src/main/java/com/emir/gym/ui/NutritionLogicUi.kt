@@ -4,6 +4,7 @@ import com.emir.gym.data.ActivityLog
 import com.emir.gym.data.ActivityType
 import com.emir.gym.data.Meal
 import com.emir.gym.data.MealType
+import com.emir.gym.ui.components.UiFormat
 
 /** Beslenme ekraninin saf mantigi (arayuzden bagimsiz, birim testli). */
 object NutritionUi {
@@ -95,6 +96,27 @@ object NutritionUi {
 
     /** Hizli eklemede kopya: yeni kayit, hedef gun. */
     fun copyTo(meal: Meal, epochDay: Long): Meal = meal.copy(id = 0, epochDay = epochDay)
+
+    // ---- Kalori toplami ----
+
+    /**
+     * Kalori 0 = girilmemis sayilir (sema Int). [loggedMeals] kalorisi girilen, [missingMeals] girilmeyen ogun sayisi.
+     */
+    data class CalorieTotal(val kcal: Int, val loggedMeals: Int, val missingMeals: Int) {
+        val hasAny: Boolean get() = loggedMeals > 0
+        /** Bazi ogunlerin kalorisi girilmis, bazilari girilmemis: toplam eksik olabilir. */
+        val hasMissing: Boolean get() = hasAny && missingMeals > 0
+    }
+
+    fun calorieTotal(meals: List<Meal>): CalorieTotal {
+        val logged = meals.count { it.calories > 0 }
+        return CalorieTotal(meals.sumOf { it.calories }, logged, meals.size - logged)
+    }
+
+    // ---- Gram bicimi ----
+
+    /** Protein/karbonhidrat/yag gramlari: tam sayiysa ondaliksiz, degilse en cok 1 ondalik (nokta). */
+    fun grams(value: Double): String = UiFormat.number(value, 1)
 
     // ---- Haftalik protein ----
 

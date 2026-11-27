@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.Canvas
@@ -32,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.emir.gym.R
 import com.emir.gym.data.Meal
@@ -95,11 +97,11 @@ fun DayNavigator(
 private fun StatusLine(status: NutritionUi.Status, unit: String, protein: Boolean = false, hasRange: Boolean = false) {
     val c = GymTheme.colors
     val text = when (status.kind) {
-        NutritionUi.StatusKind.REMAINING -> stringResource(R.string.nutr_remaining, UiFormat.number(status.amount, if (unit == "ml") 0 else 1), unit)
+        NutritionUi.StatusKind.REMAINING -> stringResource(R.string.nutr_remaining, if (unit == "ml") UiFormat.number(status.amount, 0) else NutritionUi.grams(status.amount), unit)
         NutritionUi.StatusKind.REACHED -> stringResource(if (hasRange) R.string.nutr_in_range else R.string.nutr_reached)
         NutritionUi.StatusKind.OVER ->
-            if (protein) stringResource(R.string.nutr_over_protein, UiFormat.number(status.amount, 1))
-            else stringResource(R.string.nutr_over, UiFormat.number(status.amount, if (unit == "ml") 0 else 1), unit)
+            if (protein) stringResource(R.string.nutr_over_protein, NutritionUi.grams(status.amount))
+            else stringResource(R.string.nutr_over, if (unit == "ml") UiFormat.number(status.amount, 0) else NutritionUi.grams(status.amount), unit)
     }
     Text(
         text,
@@ -112,7 +114,7 @@ private fun StatusLine(status: NutritionUi.Status, unit: String, protein: Boolea
 @Composable
 fun SummaryCard(
     proteinG: Double,
-    calories: Int,
+    calorieTotal: NutritionUi.CalorieTotal,
     waterMl: Int,
     proteinRange: ClosedFloatingPointRange<Double>?,
     weightKg: Double?,
@@ -131,7 +133,7 @@ fun SummaryCard(
             Text(
                 stringResource(
                     R.string.nutr_protein_range,
-                    UiFormat.number(proteinRange.start, 1), UiFormat.number(proteinRange.endInclusive, 1), UiFormat.number(weightKg ?: 0.0, 1),
+                    NutritionUi.grams(proteinRange.start), NutritionUi.grams(proteinRange.endInclusive), NutritionUi.grams(weightKg ?: 0.0),
                 ),
                 style = MaterialTheme.typography.bodySmall,
                 color = scheme.onSurfaceVariant,
@@ -139,7 +141,7 @@ fun SummaryCard(
         } else {
             Text(stringResource(R.string.nutr_protein).upperTr(), style = LabelStyles.caps, color = scheme.onSurfaceVariant)
             Spacer(Modifier.height(4.dp))
-            Text(stringResource(R.string.nutr_taken_protein, UiFormat.number(proteinG, 1)), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface)
+            Text(stringResource(R.string.nutr_taken_protein, NutritionUi.grams(proteinG)), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface)
             Spacer(Modifier.height(2.dp))
             Text(stringResource(R.string.nutr_no_weight_title), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurface)
             Text(stringResource(R.string.nutr_no_weight_text), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
@@ -151,18 +153,33 @@ fun SummaryCard(
 
         Spacer(Modifier.height(18.dp))
         // Kalori
+        val kcalUnit = stringResource(R.string.nutr_unit_kcal)
         if (calorieGoal != null && calorieGoal > 0) {
-            MacroProgress(stringResource(R.string.nutr_calories), calories.toDouble(), calorieGoal.toDouble(), stringResource(R.string.nutr_unit_kcal))
-            Spacer(Modifier.height(6.dp))
-            StatusLine(NutritionUi.status(calories.toDouble(), calorieGoal.toDouble()), stringResource(R.string.nutr_unit_kcal))
+            if (calorieTotal.hasAny) {
+                MacroProgress(stringResource(R.string.nutr_calories), calorieTotal.kcal.toDouble(), calorieGoal.toDouble(), kcalUnit)
+                Spacer(Modifier.height(6.dp))
+                StatusLine(NutritionUi.status(calorieTotal.kcal.toDouble(), calorieGoal.toDouble()), kcalUnit)
+            } else {
+                // Hic kalori girilmediyse bos cubuk "hedefin cok altindasin" gibi yanilticidir.
+                Text(stringResource(R.string.nutr_calories).upperTr(), style = LabelStyles.caps, color = scheme.onSurfaceVariant)
+                Spacer(Modifier.height(4.dp))
+                Text(stringResource(R.string.nutr_cal_none_goal, UiFormat.grouped(calorieGoal.toLong())), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface)
+                Text(stringResource(R.string.nutr_cal_none_hint), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
+            }
         } else {
             Text(stringResource(R.string.nutr_calories).upperTr(), style = LabelStyles.caps, color = scheme.onSurfaceVariant)
             Spacer(Modifier.height(4.dp))
-            Text(stringResource(R.string.nutr_cal_taken, UiFormat.grouped(calories.toLong())), style = MaterialTheme.typography.titleMedium, color = scheme.onSurface)
+            Text(
+                if (calorieTotal.hasAny) stringResource(R.string.nutr_cal_taken, UiFormat.grouped(calorieTotal.kcal.toLong())) else stringResource(R.string.nutr_cal_taken_none),
+                style = MaterialTheme.typography.titleMedium, color = scheme.onSurface,
+            )
             Text(stringResource(R.string.nutr_cal_no_goal), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
-            TextButton(onClick = onOpenSettings) {
+            TextButton(onClick = onOpenSettings, contentPadding = androidx.compose.foundation.layout.PaddingValues(0.dp)) {
                 Text(stringResource(R.string.nutr_open_settings), color = GymTheme.colors.accent)
             }
+        }
+        if (calorieTotal.hasMissing) {
+            Text(stringResource(R.string.nutr_cal_missing_note), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
         }
 
         Spacer(Modifier.height(18.dp))
@@ -185,16 +202,30 @@ fun SummaryCard(
 fun MealItem(meal: Meal, onEdit: () -> Unit, onDelete: () -> Unit) {
     val parts = buildList {
         if (meal.calories > 0) add(stringResource(R.string.nutr_meal_detail, UiFormat.grouped(meal.calories.toLong())))
-        meal.carbsG?.let { add(stringResource(R.string.nutr_carbs_short, UiFormat.number(it, 1))) }
-        meal.fatG?.let { add(stringResource(R.string.nutr_fat_short, UiFormat.number(it, 1))) }
+        meal.carbsG?.let { add(stringResource(R.string.nutr_carbs_short, NutritionUi.grams(it))) }
+        meal.fatG?.let { add(stringResource(R.string.nutr_fat_short, NutritionUi.grams(it))) }
     }
+    val title = meal.description.ifBlank { meal.mealType.label }
     Row(verticalAlignment = Alignment.CenterVertically) {
-        com.emir.gym.ui.components.MealRow(
-            title = meal.description.ifBlank { meal.mealType.label },
-            detail = parts.joinToString(" · ").ifEmpty { null },
-            value = stringResource(R.string.nutr_group_value, UiFormat.number(meal.proteinG, 1)),
-            modifier = Modifier.weight(1f).clickable(onClick = onEdit),
-        )
+        // components.MealRow'un sabit saat sutunu burada bos kalirdi; sade, solu hizali satir.
+        Row(
+            Modifier.weight(1f).heightIn(min = 56.dp).clip(Radii.inner).clickable(onClick = onEdit).padding(horizontal = 4.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (parts.isNotEmpty()) {
+                    Text(parts.joinToString(" · "), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            Text(
+                stringResource(R.string.nutr_group_value, NutritionUi.grams(meal.proteinG)),
+                style = MaterialTheme.typography.labelLarge.tabular(),
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+            )
+        }
         DeleteButton(stringResource(R.string.nutr_delete_desc, meal.description.ifBlank { meal.mealType.label }), onDelete)
     }
 }
@@ -212,7 +243,7 @@ fun WeekProteinCard(week: NutritionUi.WeekProtein, targetLow: Double?) {
     val scheme = MaterialTheme.colorScheme
     val c = GymTheme.colors
     val labels = stringArrayResource(R.array.ui_weekday_short)
-    val avgText = week.averageG?.let { UiFormat.number(it, 0) } ?: "0"
+    val avgText = week.averageG?.let { NutritionUi.grams(it) } ?: "0"
     val maxDay = week.days.maxOf { it.proteinG }
     val scale = maxOf(maxDay, targetLow ?: 0.0, 1.0)
     val barArea = 84.dp
@@ -233,7 +264,7 @@ fun WeekProteinCard(week: NutritionUi.WeekProtein, targetLow: Double?) {
                     Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Bottom) {
                         if (d.proteinG > 0) {
                             Text(
-                                UiFormat.number(d.proteinG, 0),
+                                NutritionUi.grams(d.proteinG),
                                 style = MaterialTheme.typography.labelSmall.tabular(),
                                 color = scheme.onSurfaceVariant,
                                 maxLines = 1,
@@ -278,7 +309,7 @@ fun WeekProteinCard(week: NutritionUi.WeekProtein, targetLow: Double?) {
         }
         Spacer(Modifier.height(6.dp))
         if (targetLow != null) {
-            Text(stringResource(R.string.nutr_week_target, UiFormat.number(targetLow, 0)), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
+            Text(stringResource(R.string.nutr_week_target, NutritionUi.grams(targetLow)), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
         }
         Text(stringResource(R.string.nutr_week_avg_note), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
     }

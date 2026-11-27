@@ -60,6 +60,7 @@ import com.emir.gym.ui.components.UiFormat
 import com.emir.gym.ui.theme.LabelStyles
 import com.emir.gym.ui.theme.upperTr
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Locale
 
@@ -76,6 +77,7 @@ fun NutritionScreen(vm: GymViewModel, onOpenSettings: () -> Unit, modifier: Modi
     val activities by vm.activities.collectAsState()
     val weights by vm.bodyWeights.collectAsState()
     val goals by vm.goals.collectAsState()
+    val ready by vm.nutritionReady.collectAsState()
 
     var pickDate by remember { mutableStateOf(false) }
     var formMeal by remember { mutableStateOf<Meal?>(null) }
@@ -94,6 +96,7 @@ fun NutritionScreen(vm: GymViewModel, onOpenSettings: () -> Unit, modifier: Modi
     val waterGoal = remember(goals.waterMl, epochDay, activities) { NutritionUi.waterGoal(goals.waterMl, epochDay, activities) }
     val dayMeals = remember(meals, epochDay) { NutritionUi.mealsOfDay(meals, epochDay) }
     val dayWater = remember(water, epochDay) { water.filter { it.epochDay == epochDay }.sortedByDescending { it.id } }
+    val calTotal = remember(dayMeals) { NutritionUi.calorieTotal(dayMeals) }
     val recent = remember(meals) { NutritionUi.recentMeals(meals) }
     val week = remember(meals, epochDay) { NutritionUi.weeklyProtein(meals, epochDay) }
 
@@ -108,7 +111,7 @@ fun NutritionScreen(vm: GymViewModel, onOpenSettings: () -> Unit, modifier: Modi
         )
 
         SummaryCard(
-            proteinG = daily.proteinG, calories = daily.calories, waterMl = daily.waterMl,
+            proteinG = daily.proteinG, calorieTotal = calTotal, waterMl = daily.waterMl,
             proteinRange = daily.proteinRange, weightKg = weightKg,
             calorieGoal = goals.calories, waterGoal = waterGoal, onOpenSettings = onOpenSettings,
         )
@@ -124,18 +127,19 @@ fun NutritionScreen(vm: GymViewModel, onOpenSettings: () -> Unit, modifier: Modi
                 vm.notify(context.getString(R.string.nutr_recent_added, m.description))
             }
         }
-        MealsCard(dayMeals, onAdd = { formMeal = null; showForm = true }, onEdit = { formMeal = it; showForm = true }, onDelete = { deleteMeal = it })
+        MealsCard(ready, dayMeals, onAdd = { formMeal = null; showForm = true }, onEdit = { formMeal = it; showForm = true }, onDelete = { deleteMeal = it })
 
         SectionHeader(stringResource(R.string.nutr_water_section))
         WaterCard(
-            dayWater,
+            ready, dayWater,
             onAdd = { ml -> if (pass()) vm.saveWater(WaterLog(epochDay = epochDay, ml = ml)) },
             onCustom = { customWater = true },
             onDelete = { deleteWater = it },
         )
 
         SectionHeader(stringResource(R.string.nutr_week_section))
-        if (week.hasData) WeekProteinCard(week, daily.proteinRange?.start)
+        if (!ready) Unit
+        else if (week.hasData) WeekProteinCard(week, daily.proteinRange?.start)
         else AppCard(Modifier.fillMaxWidth()) {
             EmptyState(
                 title = stringResource(R.string.nutr_week_empty_title),
@@ -193,7 +197,7 @@ private fun RecentChips(recent: List<Meal>, onPick: (Meal) -> Unit) {
             recent.forEach { m ->
                 val name = if (m.description.length > 18) m.description.take(17).trimEnd() + "…" else m.description
                 GymChip(
-                    label = stringResource(R.string.nutr_recent_chip, name, UiFormat.number(m.proteinG, 1)),
+                    label = stringResource(R.string.nutr_recent_chip, name, NutritionUi.grams(m.proteinG)),
                     selected = false,
                     onClick = { onPick(m) },
                 )
@@ -203,8 +207,10 @@ private fun RecentChips(recent: List<Meal>, onPick: (Meal) -> Unit) {
 }
 
 @Composable
-private fun MealsCard(meals: List<Meal>, onAdd: () -> Unit, onEdit: (Meal) -> Unit, onDelete: (Meal) -> Unit) {
+private fun MealsCard(ready: Boolean, meals: List<Meal>, onAdd: () -> Unit, onEdit: (Meal) -> Unit, onDelete: (Meal) -> Unit) {
     val scheme = MaterialTheme.colorScheme
+    // Ilk veri gelene kadar bos durum gosterilmez (yanlis "ogun yok" parlamasi olmasin).
+    if (!ready) return
     AppCard(Modifier.fillMaxWidth()) {
         if (meals.isEmpty()) {
             EmptyState(
@@ -222,7 +228,7 @@ private fun MealsCard(meals: List<Meal>, onAdd: () -> Unit, onEdit: (Meal) -> Un
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(type.label.upperTr(), style = LabelStyles.caps, color = scheme.onSurfaceVariant, modifier = Modifier.weight(1f))
                 Text(
-                    stringResource(R.string.nutr_group_value, UiFormat.number(list.sumOf { it.proteinG }, 1)),
+                    stringResource(R.string.nutr_group_value, NutritionUi.grams(list.sumOf { it.proteinG })),
                     style = MaterialTheme.typography.labelMedium,
                     color = scheme.onSurfaceVariant,
                 )
@@ -232,22 +238,24 @@ private fun MealsCard(meals: List<Meal>, onAdd: () -> Unit, onEdit: (Meal) -> Un
         HorizontalDivider(Modifier.padding(vertical = 10.dp), color = com.emir.gym.ui.theme.GymTheme.colors.cardBorder)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(R.string.nutr_day_total), style = MaterialTheme.typography.titleSmall, color = scheme.onSurface, modifier = Modifier.weight(1f))
+            val cal = NutritionUi.calorieTotal(meals)
+            val protein = NutritionUi.grams(meals.sumOf { it.proteinG })
             Text(
-                stringResource(
-                    R.string.nutr_total_value,
-                    UiFormat.number(meals.sumOf { it.proteinG }, 1),
-                    UiFormat.grouped(meals.sumOf { it.calories }.toLong()),
-                ),
+                if (cal.hasAny) stringResource(R.string.nutr_total_value, protein, UiFormat.grouped(cal.kcal.toLong()))
+                else stringResource(R.string.nutr_total_value_nocal, protein),
                 style = MaterialTheme.typography.labelLarge,
                 color = scheme.onSurface,
             )
+        }
+        if (NutritionUi.calorieTotal(meals).hasMissing) {
+            Text(stringResource(R.string.nutr_cal_missing_note), style = MaterialTheme.typography.bodySmall, color = scheme.onSurfaceVariant)
         }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun WaterCard(logs: List<WaterLog>, onAdd: (Int) -> Unit, onCustom: () -> Unit, onDelete: (WaterLog) -> Unit) {
+private fun WaterCard(ready: Boolean, logs: List<WaterLog>, onAdd: (Int) -> Unit, onCustom: () -> Unit, onDelete: (WaterLog) -> Unit) {
     val scheme = MaterialTheme.colorScheme
     AppCard(Modifier.fillMaxWidth()) {
         FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -257,7 +265,9 @@ private fun WaterCard(logs: List<WaterLog>, onAdd: (Int) -> Unit, onCustom: () -
             GymChip(stringResource(R.string.nutr_water_custom), selected = false, onClick = onCustom)
         }
         Spacer(Modifier.height(8.dp))
-        if (logs.isEmpty()) {
+        if (!ready) {
+            // veri bekleniyor
+        } else if (logs.isEmpty()) {
             Text(stringResource(R.string.nutr_water_none), style = MaterialTheme.typography.bodyMedium, color = scheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 8.dp))
         } else {
             logs.forEach { w ->
@@ -417,6 +427,16 @@ private fun DatePickerTr(epochDay: Long, todayDay: Long, onPick: (Long) -> Unit,
                 ) { Text(stringResource(R.string.action_ok)) }
             },
             dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) } },
-        ) { DatePicker(state) }
+        ) {
+            val shown = state.selectedDateMillis?.let {
+                LocalDate.ofEpochDay(NutritionUi.utcMillisToEpochDay(it)).format(DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.forLanguageTag("tr-TR")))
+            }.orEmpty()
+            DatePicker(
+                state,
+                title = { Text(stringResource(R.string.nutr_pick_date), Modifier.padding(start = 24.dp, end = 24.dp, top = 16.dp), style = MaterialTheme.typography.labelLarge) },
+                headline = { Text(shown, Modifier.padding(horizontal = 24.dp), style = MaterialTheme.typography.headlineMedium) },
+                showModeToggle = false,
+            )
+        }
     }
 }

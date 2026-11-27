@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -57,6 +58,13 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     val waterLogs: StateFlow<List<WaterLog>> = trackingDao.observeWater().hot(emptyList())
     val bodyWeights: StateFlow<List<BodyWeight>> = trackingDao.observeBodyWeights().hot(emptyList())
     val goals: StateFlow<NutritionGoals> = settingsStore.goals
+
+    /** Ogun ve su akislari ilk verisini verdi mi (bos liste ile "henuz yuklenmedi" ayrimi). */
+    val nutritionReady: StateFlow<Boolean> =
+        kotlinx.coroutines.flow.combine(
+            trackingDao.observeMeals().map { true },
+            trackingDao.observeWater().map { true },
+        ) { a, b -> a && b }.hot(false)
 
     /** Kullaniciya gosterilecek mesaj (hata ya da bilgi). */
     val error = MutableStateFlow<String?>(null)

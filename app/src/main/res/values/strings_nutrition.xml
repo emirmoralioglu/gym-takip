@@ -22,6 +22,11 @@
     <string name="nutr_add_weight">Ayarlar\'dan kilo ekle</string>
     <string name="nutr_taken_protein">Alınan protein: %s g</string>
     <string name="nutr_cal_taken">Alınan: %s kcal</string>
+    <string name="nutr_cal_taken_none">Alınan: —</string>
+    <string name="nutr_cal_none_goal">— / %s kcal</string>
+    <string name="nutr_cal_none_hint">Kalori girilmiş öğün yok</string>
+    <string name="nutr_cal_missing_note">Kalori girilmeyen öğünler sayılmaz</string>
+    <string name="nutr_total_value_nocal">%s g protein · —</string>
     <string name="nutr_cal_no_goal">Kalori hedefi belirlenmemiş. Ayarlar\'dan ekleyebilirsin.</string>
     <string name="nutr_open_settings">Ayarlar\'a git</string>
     <string name="nutr_remaining">%1$s %2$s kaldı</string>
