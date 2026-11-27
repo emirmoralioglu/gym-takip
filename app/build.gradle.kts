@@ -46,6 +46,9 @@ dependencies {
     implementation("androidx.room:room-ktx:2.8.5")
     ksp("androidx.room:room-compiler:2.8.5")
 
+    // Asistan: Anthropic resmi Java SDK'si (Claude saglayicisi). Gemini/OpenAI-uyumlu ham HTTPS (OkHttp SDK ile gelir).
+    implementation("com.anthropic:anthropic-java:3.3.0")
+
     testImplementation("junit:junit:4.13.2")
 
     // room-testing json 1.8.1 ister; lifecycle 1.7.3 getiriyor. Yalnizca debug derlemesinde yukseltilir.

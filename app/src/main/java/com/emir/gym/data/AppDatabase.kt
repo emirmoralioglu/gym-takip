@@ -11,14 +11,16 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         WorkoutEntry::class, CustomExercise::class,
         PlanDay::class, PlanExercise::class, ActivityLog::class,
         Meal::class, WaterLog::class, BodyWeight::class,
+        ChatMessageEntity::class, PendingActionEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun workoutDao(): WorkoutDao
     abstract fun planDao(): PlanDao
     abstract fun trackingDao(): TrackingDao
+    abstract fun chatDao(): ChatDao
 
     companion object {
         @Volatile private var instance: AppDatabase? = null
@@ -31,7 +33,7 @@ abstract class AppDatabase : RoomDatabase() {
         fun get(context: Context): AppDatabase = instance ?: synchronized(this) {
             instance ?: Room.databaseBuilder(
                 context.applicationContext, AppDatabase::class.java, "gym.db"
-            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+            ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .addCallback(seedOnCreate)
                 .build().also { instance = it }
         }

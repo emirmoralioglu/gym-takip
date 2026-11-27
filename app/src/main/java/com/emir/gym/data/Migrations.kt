@@ -117,3 +117,22 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         }
     }
 }
+
+/**
+ * v4 -> v5: asistan sohbeti ve onay bekleyen oneriler. Yalnizca CREATE TABLE; mevcut tablolara
+ * dokunulmaz, yikici gecis yok.
+ */
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `chat_messages` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`createdAt` INTEGER NOT NULL, `role` TEXT NOT NULL, `contentJson` TEXT NOT NULL, " +
+                "`imagePath` TEXT, `provider` TEXT NOT NULL, `model` TEXT NOT NULL)"
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `pending_actions` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, " +
+                "`createdAt` INTEGER NOT NULL, `type` TEXT NOT NULL, `payloadJson` TEXT NOT NULL, " +
+                "`status` TEXT NOT NULL, `resultRef` TEXT)"
+        )
+    }
+}
