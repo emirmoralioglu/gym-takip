@@ -39,7 +39,7 @@ import java.time.LocalDate
 
 /** Ayarlar: tartı, kilo ayarı, protein aralığı, su ve kalori hedefi. */
 @Composable
-fun SettingsScreen(vm: GymViewModel, modifier: Modifier = Modifier) {
+fun SettingsScreen(vm: GymViewModel, modifier: Modifier = Modifier, onOpenAssistantSettings: () -> Unit = {}) {
     val goals by vm.goals.collectAsState()
     val weights by vm.bodyWeights.collectAsState()
     val today = LocalDate.now()
@@ -69,6 +69,9 @@ fun SettingsScreen(vm: GymViewModel, modifier: Modifier = Modifier) {
         ProteinCard(effective.bodyWeightKg, effective.proteinRange(), goals.proteinPerKgMin, goals.proteinPerKgMax)
         WaterGoalCard(vm, goals.waterMl)
         CalorieGoalCard(vm, goals.calories)
+
+        SectionHeader(stringResource(R.string.asst_entry_section))
+        AssistantSettingsEntry(vm, onOpenAssistantSettings)
     }
 }
 

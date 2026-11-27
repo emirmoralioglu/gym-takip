@@ -71,6 +71,11 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
         com.emir.gym.assistant.AssistantController(app, viewModelScope) { goals.value }
     }
 
+    /** Sohbet ekraninin durumu (taslak, gorseller, olaylar); ekran dondurmede korunur. */
+    val assistantUi: com.emir.gym.ui.AssistantUiModel by lazy {
+        com.emir.gym.ui.AssistantUiModel(app, assistant, viewModelScope)
+    }
+
     /** Kullaniciya gosterilecek mesaj (hata ya da bilgi). */
     val error = MutableStateFlow<String?>(null)
 
