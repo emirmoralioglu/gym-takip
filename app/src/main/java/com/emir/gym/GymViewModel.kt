@@ -273,6 +273,16 @@ class GymViewModel(app: Application) : AndroidViewModel(app) {
     fun saveActivity(log: ActivityLog) = run("Aktivite kaydedilemedi") { trackingDao.upsertActivity(log) }
     fun deleteActivity(log: ActivityLog) = run("Aktivite silinemedi") { trackingDao.deleteActivity(log) }
     fun saveMeal(meal: Meal) = run("Öğün kaydedilemedi") { trackingDao.upsertMeal(meal) }
+    /** Ogunu yazar; yalnizca yazma basarili olursa [onSaved] cagrilir (hatada mesaj verilir). */
+    fun saveMealThen(meal: Meal, onSaved: () -> Unit) {
+        viewModelScope.launch {
+            val ok = try { trackingDao.upsertMeal(meal); true } catch (e: kotlinx.coroutines.CancellationException) { throw e } catch (e: Exception) {
+                error.value = "Öğün kaydedilemedi: ${e.message ?: "bilinmeyen hata"}"; false
+            }
+            if (ok) onSaved()
+        }
+    }
+
     fun deleteMeal(meal: Meal) = run("Öğün silinemedi") { trackingDao.deleteMeal(meal) }
     fun saveWater(log: WaterLog) = run("Su kaydedilemedi") { trackingDao.upsertWater(log) }
     fun deleteWater(log: WaterLog) = run("Su silinemedi") { trackingDao.deleteWater(log) }

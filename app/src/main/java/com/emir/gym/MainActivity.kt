@@ -35,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.emir.gym.ui.DayFolderScreen
 import com.emir.gym.ui.MaxContentWidth
+import com.emir.gym.ui.NutritionScreen
 import com.emir.gym.ui.ProgressScreen
 import com.emir.gym.ui.RestPillHost
 import com.emir.gym.ui.SettingsScreen
@@ -45,6 +46,8 @@ import com.emir.gym.ui.components.GymIcons
 import com.emir.gym.ui.components.GymNavItem
 import com.emir.gym.ui.components.UiFormat
 import com.emir.gym.ui.theme.GymTheme
+
+private const val SETTINGS_TAB = 4
 
 class MainActivity : ComponentActivity() {
     private val vm: GymViewModel by viewModels()
@@ -71,6 +74,7 @@ private fun GymApp(vm: GymViewModel) {
         GymNavItem(stringResource(R.string.screens_tab_workout), GymIcons.Today),
         GymNavItem(stringResource(R.string.tab_weekly), GymIcons.Week),
         GymNavItem(stringResource(R.string.tab_progress), GymIcons.Trend),
+        GymNavItem(stringResource(R.string.tab_nutrition), GymIcons.Meal),
         GymNavItem(stringResource(R.string.tab_settings), GymIcons.Sliders),
     )
     Scaffold(
@@ -100,6 +104,7 @@ private fun GymApp(vm: GymViewModel) {
             }
             1 -> WeeklyScreen(vm, m)
             2 -> ProgressScreen(vm, m)
+            3 -> NutritionScreen(vm, onOpenSettings = { tab = SETTINGS_TAB }, modifier = m)
             else -> SettingsScreen(vm, m)
         }
     }
