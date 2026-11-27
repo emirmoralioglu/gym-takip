@@ -67,7 +67,7 @@ interface ChatBackend {
 class ControllerBackend(val ctl: AssistantController) : ChatBackend {
     override val messages get() = ctl.messages
     override val actions get() = ctl.actions
-    override val busy get() = ctl.sending.value || ctl.testing.value
+    override val busy get() = ctl.sending.value || ctl.testing.value || ctl.clearing.value
     override suspend fun sweepOrphanImages() = ctl.sweepOrphanImages()
     override suspend fun prepare(handle: Any) = ctl.prepare(handle as android.net.Uri)
     override fun discard(list: List<PreparedImage>) = ctl.discard(list)

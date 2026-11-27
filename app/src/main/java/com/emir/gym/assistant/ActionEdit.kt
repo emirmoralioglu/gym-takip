@@ -5,28 +5,45 @@ import com.emir.gym.ui.NutritionUi
 import java.time.LocalDate
 
 /**
- * Kullanicinin duzeltip onayladigi oneri icin saf dogrulama. Sinirlar [ToolValidator] ve formlarla AYNIDIR
- * (protein <= 300, karbonhidrat <= 1000, yag <= 500, kalori <= 5000, aciklama <= 80, su <= 5000).
- */
-/**
  * Model ciktisindaki gorunmez / yon degistiren karakterleri atar (kartta gorunen = kayitta olan):
  * kontrol (Cc: satir sonu, sekme dahil -> bosluk), bicim (Cf: U+200E/F, U+202A-E, U+2066-2069, sifir genislik, BOM),
- * satir/paragraf ayiricilari. Sonra bosluklar sadelestirilir ve kirpilir.
+ * satir/paragraf ayiricilari. Istisna: ZWJ (U+200D) ve ZWNJ (U+200C) IKI EMOJI ARASINDA korunur (aile, meslek, ten rengi
+ * gibi birlesik emoji dizileri bozulmasin); baska her yerde (bagimsiz, bas/son, art arda) atilir. Sonra bosluklar
+ * sadelestirilir ve kirpilir.
  */
 object TextClean {
+    private fun symbol(cp: Int) = Character.getType(cp) == Character.OTHER_SYMBOL.toInt()
+    /** Birlestiricinin solunda olabilir: emoji, ten rengi, varyasyon secici (FE0F). */
+    private fun emojiLeft(cp: Int) = symbol(cp) || cp in 0x1F3FB..0x1F3FF || cp == 0xFE0F
+
     fun clean(s: String): String {
+        val cps = s.codePoints().toArray()
         val sb = StringBuilder(s.length)
-        for (ch in s) {
-            when (Character.getType(ch).toByte()) {
-                Character.FORMAT -> {}
-                Character.CONTROL, Character.LINE_SEPARATOR, Character.PARAGRAPH_SEPARATOR -> sb.append(' ')
-                else -> sb.append(ch)
+        var last = -1
+        for ((i, cp) in cps.withIndex()) {
+            val type = Character.getType(cp)
+            when {
+                cp == 0x200D || cp == 0x200C -> {
+                    // Sagdaki ilk 'gorunur' kod noktasi: atilacak bicim karakterleri (yon, sifir genislik) atlanir.
+                    val next = (i + 1 until cps.size).map { cps[it] }
+                        .firstOrNull { Character.getType(it) != Character.FORMAT.toInt() || it == 0x200D || it == 0x200C }
+                    if (last >= 0 && emojiLeft(last) && next != null && symbol(next)) { sb.appendCodePoint(cp); last = cp }
+                }
+                type == Character.FORMAT.toInt() -> {}
+                type == Character.CONTROL.toInt() || type == Character.LINE_SEPARATOR.toInt() || type == Character.PARAGRAPH_SEPARATOR.toInt() -> {
+                    sb.append(' '); last = ' '.code
+                }
+                else -> { sb.appendCodePoint(cp); last = cp }
             }
         }
         return sb.toString().replace(Regex(" {2,}"), " ").trim()
     }
 }
 
+/**
+ * Kullanicinin duzeltip onayladigi oneri icin saf dogrulama. Sinirlar [ToolValidator] ve formlarla AYNIDIR
+ * (protein <= 300, karbonhidrat <= 1000, yag <= 500, kalori <= 5000, aciklama <= 80, su <= 5000).
+ */
 object ActionEdit {
     /** @return null = gecerli; aksi halde kullaniciya gosterilecek kisa Turkce hata. */
     fun check(p: ActionPayload, today: LocalDate = LocalDate.now()): String? {

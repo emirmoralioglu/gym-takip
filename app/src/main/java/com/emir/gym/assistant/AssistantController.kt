@@ -88,7 +88,11 @@ class AssistantController(
     }
 
     /** Tek 'mesgul' durumu: gonderim, baglanti testi ya da motor surerken yeni is baslamaz. */
-    private fun idle() = ChatBusy.idle(sending.value, testing.value, engine.isBusy)
+    /** Sohbet temizleme isi (IO) bitene kadar 'mesgul': yeni gonderim yeni mesajin silinmesine yol acmasin. */
+    private val clearer = ClearRunner(scope, Dispatchers.IO) { repository.clearChat(images.dir) }
+    val clearing get() = clearer.running
+
+    private fun idle() = ChatBusy.idle(sending.value, testing.value, engine.isBusy, clearer.running.value)
 
     fun send(text: String, imageUris: List<Uri> = emptyList(), onDone: (SendResult) -> Unit = {}) {
         if (!idle()) { error.value = ErrorMapper.busy(); onDone(SendResult(false, error.value)); return }
@@ -115,7 +119,7 @@ class AssistantController(
     fun sendPrepared(text: String, prepared: List<PreparedImage>, onDone: (SendResult) -> Unit = {}) {
         if (!idle()) { discard(prepared); error.value = ErrorMapper.busy(); onDone(SendResult(false, error.value)); return }
         // Gorsel dosyasi diskte yoksa (ornegin sohbet temizlendi) sessizce gorselsiz GONDERILMEZ.
-        if (prepared.any { images.fileOrNull(it.path) == null }) {
+        if (PreparedCheck.firstMissing(prepared.map { it.path }) { images.fileOrNull(it) != null } != null) {
             discard(prepared)
             error.value = AssistantError(AssistantError.Kind.BAD_REQUEST, "Görsel bulunamadı (silinmiş olabilir). Görseli yeniden ekle.")
             onDone(SendResult(false, error.value))
@@ -186,7 +190,7 @@ class AssistantController(
     /** @return false: mesgul, temizlenmedi. */
     fun clearChatNow(): Boolean {
         if (!idle()) { error.value = ErrorMapper.busy(); return false }
-        scope.launch(Dispatchers.IO) { repository.clearChat(images.dir) }
+        clearer.start()
         return true
     }
 
@@ -269,5 +273,33 @@ object ImageOrphans {
 
 /** Tek 'mesgul' kurali (gonderim / baglanti testi / motor): hicbiri suruyorsa bos. */
 object ChatBusy {
-    fun idle(sending: Boolean, testing: Boolean, engineBusy: Boolean): Boolean = !sending && !testing && !engineBusy
+    fun idle(sending: Boolean, testing: Boolean, engineBusy: Boolean, clearing: Boolean = false): Boolean =
+        !sending && !testing && !engineBusy && !clearing
+}
+
+/** Saf: gonderilecek gorsel yollarindan diskte OLMAYAN ilki (yoksa null). */
+object PreparedCheck {
+    fun firstMissing(paths: List<String>, exists: (String) -> Boolean): String? = paths.firstOrNull { !exists(it) }
+}
+
+/**
+ * Tek seferde tek is calistirir ([action] bitene kadar [running] true): sohbet temizleme gibi uzun IO isleri
+ * suruyorken yeni is baslamasin diye. [start] false = zaten calisiyor.
+ */
+class ClearRunner(
+    private val scope: CoroutineScope,
+    private val dispatcher: kotlin.coroutines.CoroutineContext,
+    private val action: suspend () -> Unit,
+) {
+    val running = MutableStateFlow(false)
+
+    @Synchronized
+    fun start(): Boolean {
+        if (running.value) return false
+        running.value = true
+        scope.launch(dispatcher) {
+            try { action() } finally { running.value = false }
+        }
+        return true
+    }
 }

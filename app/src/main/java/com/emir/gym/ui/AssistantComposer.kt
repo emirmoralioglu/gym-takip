@@ -68,7 +68,8 @@ fun ChatComposer(ui: AssistantUiModel, config: AssistantConfig, configured: Bool
     val attached = ui.attached
     val preparing = ui.preparing
     val testing by ui.ctl.testing.collectAsState()
-    val blocked = sending || testing
+    val clearing by ui.ctl.clearing.collectAsState()
+    val blocked = sending || testing || clearing
     val canSend = ComposerRules.canSend(ui.draft, attached.size, blocked, preparing > 0, configured)
     val canAttach = ComposerRules.canAttach(imagesOk, attached.size + preparing, blocked, preparing > 0, configured)
 
